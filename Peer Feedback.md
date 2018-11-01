@@ -1,7 +1,8 @@
 
 # Trade Visualization Feedback from Jon, Haochen, Sinthia
 
-Need careful explanation of the left side chart; it might be difficult for people to understand what the axis represent.
+*Concern*: Need careful explanation of the left side chart; it might be difficult for people to understand what the axis represent.
+
 *Idea*: Animation transforming from pie chart to the horizontal bar chart. This would clearly explain to users what the size of the bars represents and how they fit into the dataset. But be careful about adding to many moving parts to avoid distracting users.
 
 *Interaction Idea*: selecting a bucket on the left should light up countries on the right to clearly show association and/or drill down into specifics of the data.
