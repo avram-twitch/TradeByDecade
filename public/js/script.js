@@ -1,3 +1,3 @@
-d3.csv("data/all_tidy.csv").then(data => {
+d3.json("data/data.json").then(data => {
     console.log(data);
 });
