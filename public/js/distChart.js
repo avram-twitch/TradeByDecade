@@ -73,7 +73,7 @@ class DistributionChart {
         let area = d3.area()
                      .x(function(d,i) { return i * (that.svgHeight / 250); })
                      .y0(0)
-                     .y1(function(d,i) { yScale(d.val); });
+                     .y1(function(d,i) { return yScale(d.val); });
 
         let groups = this.svg.selectAll("g")
                              .data(myData);
@@ -82,27 +82,11 @@ class DistributionChart {
                                 .append("g");
 
         enterGroups.append('path')
-                   .datum(myData)
-                   .attr('d', area(myData))
+                   .datum(metaData)
+                   .attr('d', area(metaData))
                    .style("fill", "blue");
                                 
 
-//
-//        let xScale = d3.scaleLinear()
-//                       .domain([0, 10])
-//                       .range([this.margin.left, this.svgWidth - this.margin.left - this.margin.right]);
-//
-//        let rects = this.svg.selectAll("rect")
-//                        .data(selectedCountryData);
-//
-//        let enterRects = rects.enter()
-//                              .append("rect");
-//        enterRects.attr("x", (d,i) => xScale(i))
-//                  .attr("y", (d,i) => this.svgHeight - this.margin.bottom - yScale(d.countries.wld))
-//                  .attr("width", 0.5 * xScale(1))
-//                  .attr("height", (d, i) => yScale(d.countries.wld))
-//                  .attr("fill", "blue");
-//        console.log(selectedCountryData);
     };
         
 }
