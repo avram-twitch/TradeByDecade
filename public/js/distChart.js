@@ -31,15 +31,36 @@ class DistributionChart {
                             .attr("height", this.svgHeight);
     };
 
-    parse (data){
+    parse (data, type){
 
         let info = [];
 
+        let getVal;
+
+        if (type == "percap")
+        {
+            getVal = function(d) {
+                if (d.population != "NA")
+                {
+                    return d.countries.wld / d.population;
+                }
+                return 0;
+            };
+        }
+        else
+        {
+            getVal = function(d) {
+                return d.countries.wld;
+            };
+        }
+
         data.forEach( function (row, i) {
             info.push({
-                rank: i,
-                val: row.countries.wld,
-                code: row.code
+                rank: data.length - i,
+                val: getVal(row),
+                code: row.code,
+                direction: row.type,
+                type: type
             });
         });
 
@@ -51,38 +72,13 @@ class DistributionChart {
 
         let that = this;
 
-        let allData = [];
+        let absExpData = [];
 
         this.codeScales = {}
 
-        for (let i = 0; i < this.allCodes.length; i++)
-        {
-            let tmp = data.filter(function(d) {
-                return d.type == "export" && d.code == that.allCodes[i];
-            });
-
-            let max = d3.max(tmp, function(d) {
-                return +d.countries.wld;
-            });
-
-            let scale = d3.scaleLinear()
-                          .domain([0, max])
-                          .range([this.groupMargin.bottom, this.groupHeight - this.groupMargin.bottom - this.groupMargin.top]);
-
-            tmp.sort(function(a, b) {
-                return d3.ascending(a.countries.wld, b.countries.wld);
-            });
-
-            tmp = this.parse(tmp);
-            allData.push(tmp);
-            this.codeScales[this.allCodes[i]] = scale;
-        }
-
-        let max = d3.max(data, function(d) {
-            return +d.countries.wld;
-        });
-
-        console.log(allData);
+        absExpData = this.filterData(data, "export", "abs");
+        this.codeScales = this.generateScales(absExpData);
+        console.log(absExpData);
 
         let allYScale = d3.scaleLinear()
                           .domain([0, this.allCodes.length])
@@ -96,8 +92,11 @@ class DistributionChart {
                          let height = that.codeScales[d.code](d.val);
                          return base - height; });
 
-        let groups = this.svg.selectAll("g")
-                             .data(allData);
+        let absExp = this.svg.append("g").attr("id", "absExp");
+        let perCapExp = this.svg.append("g").attr("id", "perCapExp");
+
+        let groups = absExp.selectAll("g")
+                             .data(absExpData);
 
         let enterGroups = groups.enter()
                                 .append("g");
@@ -112,6 +111,51 @@ class DistributionChart {
              .style("fill", "blue");
                                 
 
+    };
+
+    filterData(data, direction, type){
+
+        let that = this;
+
+        let output = [];
+
+        for (let i = 0; i < this.allCodes.length; i++)
+        {
+            let tmp = data.filter(function(d) {
+                return d.type == direction && d.code == that.allCodes[i];
+            });
+
+            tmp = this.parse(tmp, type);
+
+            tmp.sort(function(a, b) {
+                return d3.ascending(a.val, b.val);
+            });
+
+            output.push(tmp);
+        }
+
+        return output;
+
+    };
+    
+    generateScales(data){
+
+        let outScales = {};
+
+        for (let i = 0; i < data.length; i++)
+        {
+            let tmp = data[i];
+            let max = d3.max(tmp, function(d) {
+                return d.val;
+            });
+
+            let scale = d3.scaleLinear()
+                          .domain([0, max])
+                          .range([this.groupMargin.bottom, this.groupHeight - this.groupMargin.bottom - this.groupMargin.top]);
+            outScales[tmp[0].code] = scale;
+        }
+
+        return outScales;
     };
         
 }
