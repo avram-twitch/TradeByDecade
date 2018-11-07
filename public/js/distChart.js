@@ -10,6 +10,7 @@ class DistributionChart {
 
         this.worldHeatMap = worldHeatMap;
         this.trendChart = trendChart;
+        this.allCodes = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
         let distChart = d3.select("#distChart");
         this.margin = {top: 10, right: 20, bottom: 20, left: 50};
@@ -29,7 +30,8 @@ class DistributionChart {
         data.forEach( function (row, i) {
             info.push({
                 rank: i,
-                val: row.countries.wld
+                val: row.countries.wld,
+                code: row.code
             });
         });
 
@@ -41,50 +43,53 @@ class DistributionChart {
 
         let that = this;
 
-        let selectedCountryData = data.filter(function(d) {
-            return d.orig == "usa" && d.type == "export" && d.code == "1";
-        });
+        let allData = [];
 
-        let allCountryData = data.filter(function(d) {
-            return d.type == "export" && d.code == "1";
-        });
+        for (let i = 0; i < this.allCodes.length; i++)
+        {
+            let tmp = data.filter(function(d) {
+                return d.type == "export" && d.code == that.allCodes[i];
+            });
+            tmp.sort(function(a, b) {
+                return d3.descending(a.countries.wld, b.countries.wld);
+            });
+            tmp = this.parse(tmp);
+            allData.push(tmp);
+        }
 
-        let max = d3.max(allCountryData, function(d) {
+        let max = d3.max(data, function(d) {
             return +d.countries.wld;
         });
 
-        console.log(allCountryData);
+        console.log(allData);
 
-        allCountryData.sort(function(a, b) {
-            return d3.descending(a.countries.wld, b.countries.wld);
-        });
+        let groupYScale = d3.scaleLinear()
+                            .domain([0, max])
+                            .range([0, (this.svgHeight - this.margin.bottom - this.margin.top) / 10]);
 
-        console.log(allCountryData);
-
-        let metaData = this.parse(allCountryData);
-        console.log(metaData);
-
-        let myData = [metaData];
-
-        let yScale = d3.scaleLinear()
-                       .domain([0, max])
-                       .range([this.margin.bottom, this.svgHeight]);
+        let allYScale = d3.scaleLinear()
+                          .domain([0, 10])
+                          .range([this.margin.bottom, this.svgHeight - this.margin.bottom - this.margin.top])
 
         let area = d3.area()
-                     .x(function(d,i) { return i * (that.svgHeight / 250); })
-                     .y0(0)
-                     .y1(function(d,i) { return yScale(d.val); });
+                     .x(function(d,i) { return i * (that.svgWidth / 250); })
+                     .y0((d) => allYScale(d.code))
+                     .y1(function(d,i) { return allYScale(d.code) - groupYScale(d.val); });
 
         let groups = this.svg.selectAll("g")
-                             .data(myData);
+                             .data(allData);
 
         let enterGroups = groups.enter()
                                 .append("g");
 
-        enterGroups.append('path')
-                   .datum(metaData)
-                   .attr('d', area(metaData))
-                   .style("fill", "blue");
+
+        let paths = enterGroups.append("path")
+                               .datum((d) => {
+                                   return d;
+                               });
+
+        paths.attr('d', area)
+             .style("fill", "blue");
                                 
 
     };
