@@ -1,0 +1,6 @@
+.distChart {
+    height: 500px;
+    width: 50%;
+    display: inline-block;
+    position: relative;
+}
