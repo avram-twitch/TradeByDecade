@@ -64,10 +64,18 @@ class DistributionChart {
         let scales = this.generateScales(fData);
         let dataSize = fData.length;
 
+        let dataSizes = {}
+
+        console.log(fData);
+        for (let i = 0; i < fData.length; i++)
+        {
+            dataSizes[fData[i][0].code] = fData[i].length;
+        }
+
         let area = d3.area()
                      .x(function(d,i) { 
                          let rightShift = that.groupWidth * position;
-                         let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / 250 * i; 
+                         let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d.code] * i; 
                          return rightShift + that.groupMargin.left + offset;
                      })
                      .y0((d) => that.allYScale(d.code))
