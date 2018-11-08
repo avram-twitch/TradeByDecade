@@ -8,3 +8,7 @@ d3.json("data/data.json").then(data => {
     distChart.update(filtered);
 });
 
+d3.json('data/world.json').then(mapData => {
+    let worldMap = new WorldChart();
+    worldMap.createCharts(mapData);
+});

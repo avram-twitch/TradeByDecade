@@ -1,6 +1,30 @@
 .distChart {
     height: 500px;
-    width: 50%;
+    width: 45%;
     display: inline-block;
     position: relative;
+}
+.worldChart {
+    height: 600px;
+    width: 45%;
+    display: inline-block;
+    position: relative;
+    outline: 1px solid gray;
+}
+.worldChartSVG {
+    outline: 1px solid black;
+}
+.worldMapGraticule {
+    fill: none;
+    stroke: #777;
+    stroke-width: .5px;
+    stroke-opacity: .2;
+    pointer-events: none;
+}
+.worldMapOutline {
+    fill: none;
+    stroke: #777;
+    stroke-width: .5px;
+    stroke-opacity: 1;
+    pointer-events: none;
 }
