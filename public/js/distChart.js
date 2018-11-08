@@ -29,74 +29,57 @@ class DistributionChart {
         this.svg = distChart.append("svg")
                             .attr("width", this.svgWidth)
                             .attr("height", this.svgHeight);
+
+        this.allYScale = d3.scaleLinear()
+                          .domain([0, this.allCodes.length])
+                          .range([this.margin.bottom, this.svgHeight - this.margin.bottom - this.margin.top])
     };
 
-    parse (data, type){
-
-        let info = [];
-
-        let getVal;
-
-        if (type == "percap")
-        {
-            getVal = function(d) {
-                if (d.population != "NA")
-                {
-                    return d.countries.wld / d.population;
-                }
-                return 0;
-            };
-        }
-        else
-        {
-            getVal = function(d) {
-                return d.countries.wld;
-            };
-        }
-
-        data.forEach( function (row, i) {
-            info.push({
-                rank: data.length - i,
-                val: getVal(row),
-                code: row.code,
-                direction: row.type,
-                type: type
-            });
-        });
-
-        return info;
-
-    };
 
     update (data){
 
         let that = this;
 
-        let absExpData = [];
+        let argsList = [{'direction': 'export', 'type': 'abs', 'position': 0},
+                        {'direction': 'export', 'type': 'percap', 'position': 1},
+                        {'direction': 'import', 'type': 'abs', 'position': 2},
+                        {'direction': 'import', 'type': 'percap', 'position': 3}];
 
-        this.codeScales = {}
+        for (let i = 0; i < argsList.length; i++)
+        {
+            this.createCharts(data, argsList[i]);
+        }
 
-        absExpData = this.filterData(data, "export", "abs");
-        this.codeScales = this.generateScales(absExpData);
-        console.log(absExpData);
+    };
 
-        let allYScale = d3.scaleLinear()
-                          .domain([0, this.allCodes.length])
-                          .range([this.margin.bottom, this.svgHeight - this.margin.bottom - this.margin.top])
+    createCharts(data, args){
+
+        let that = this;
+
+        let direction = args.direction;
+        let type = args.type;
+        let position = +args.position;
+
+        let fData = this.filterData(data, direction, type);
+        let scales = this.generateScales(fData);
+        let dataSize = fData.length;
 
         let area = d3.area()
-                     .x(function(d,i) { return that.groupMargin.left + (i * (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / 250); })
-                     .y0((d) => allYScale(d.code))
+                     .x(function(d,i) { 
+                         let rightShift = that.groupWidth * position;
+                         let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / 250 * i; 
+                         return rightShift + that.groupMargin.left + offset;
+                     })
+                     .y0((d) => that.allYScale(d.code))
                      .y1(function(d,i) { 
-                         let base = allYScale(d.code);
-                         let height = that.codeScales[d.code](d.val);
+                         let base = that.allYScale(d.code);
+                         let height = scales[d.code](d.val);
                          return base - height; });
 
-        let absExp = this.svg.append("g").attr("id", "absExp");
-        let perCapExp = this.svg.append("g").attr("id", "perCapExp");
+        let container = this.svg.append("g").attr("id", direction + type);
 
-        let groups = absExp.selectAll("g")
-                             .data(absExpData);
+        let groups = container.selectAll("g")
+                              .data(fData);
 
         let enterGroups = groups.enter()
                                 .append("g");
@@ -158,4 +141,40 @@ class DistributionChart {
         return outScales;
     };
         
+    parse (data, type){
+
+        let info = [];
+
+        let getVal;
+
+        if (type == "percap")
+        {
+            getVal = function(d) {
+                if (d.population != "NA")
+                {
+                    return d.countries.wld / d.population;
+                }
+                return 0;
+            };
+        }
+        else
+        {
+            getVal = function(d) {
+                return d.countries.wld;
+            };
+        }
+
+        data.forEach( function (row, i) {
+            info.push({
+                rank: data.length - i,
+                val: getVal(row),
+                code: row.code,
+                direction: row.type,
+                type: type
+            });
+        });
+
+        return info;
+
+    };
 }
