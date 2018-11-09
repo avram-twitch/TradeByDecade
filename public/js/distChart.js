@@ -114,6 +114,7 @@ class DistributionChart {
     updateCharts(data, args, country){
 
         // TODO Are lines correct (They appear all the same)
+        // definitely not. In order to pass data to child elements you have to use selectAll, not select
         
         // TODO Handle cases where there is no data for selected country
 
@@ -175,7 +176,7 @@ class DistributionChart {
 
         groups = container.selectAll("g")
                           .data(selectedCountryData);
-        let lines = groups.select("line");
+        let lines = groups.selectAll("line");
                                
         lines.attr("x1", (d) => {
             let rightShift = that.groupWidth * position;
