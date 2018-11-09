@@ -45,27 +45,42 @@ class DistributionChart {
         this.allYScale = d3.scaleLinear()
                           .domain([0, this.allCodes.length + 1])
                           .range([this.margin.bottom, this.svgHeight - this.margin.bottom - this.margin.top])
+        this.createHeaders();
+
+        this.argsList = [{'direction': 'export', 'type': 'abs', 'position': 1},
+                         {'direction': 'export', 'type': 'percap', 'position': 2},
+                         {'direction': 'import', 'type': 'abs', 'position': 3},
+                         {'direction': 'import', 'type': 'percap', 'position': 4}];
+
+        for (let i = 0; i < this.argsList.length; i++)
+        {
+            let direction = this.argsList[i].direction;
+            let type = this.argsList[i].type;
+            this.svg.append("g").attr("id", direction + type);
+        }
     };
 
 
-    update (data, country){
+    /*
+     * Updates chart given selected country
+     *
+     * @param data import/export data filtered to a single year
+     * @param country 3 character id of selected country
+     */
+    update (data, selectedCountry){
 
         let that = this;
 
-        this.createHeaders();
-
-        let argsList = [{'direction': 'export', 'type': 'abs', 'position': 1},
-                        {'direction': 'export', 'type': 'percap', 'position': 2},
-                        {'direction': 'import', 'type': 'abs', 'position': 3},
-                        {'direction': 'import', 'type': 'percap', 'position': 4}];
-
-        for (let i = 0; i < argsList.length; i++)
+        for (let i = 0; i < this.argsList.length; i++)
         {
-            this.createCharts(data, argsList[i], country);
+            this.updateCharts(data, this.argsList[i], selectedCountry);
         }
 
     };
 
+    /**
+     * Creates the Headers and left column labesl of distribution chart
+     */
     createHeaders(){
 
         for (let i = 0; i < this.allCodes.length; i++)
@@ -88,8 +103,26 @@ class DistributionChart {
 
     };
 
-    createCharts(data, args, country){
+    /**
+     * Given selected country and data args, generates a column of the distribution chart
+     *
+     * @param data data filtered by the selected year
+     * @param args selected row of this.argsList. Specifies direction, type, and position of column data
+     * @param country the 3 char id of selected country
+     */
 
+    updateCharts(data, args, country){
+
+        // TODO Are lines correct (They appear all the same)
+        
+        // TODO Handle cases where there is no data for selected country
+
+        // TODO Tooltip that shows countries
+        
+        // TODO (Maybe) use kernel function to show distribution
+        
+        // TODO Enable click to impact rest of chart
+        
         let that = this;
 
         let direction = args.direction;
@@ -100,7 +133,6 @@ class DistributionChart {
         let selectedCountryData = this.getSelectedCountryData(fData, country);
         let scales = this.generateScales(fData);
 
-        console.log(selectedCountryData);
 
         let dataSizes = {};
 
@@ -121,27 +153,31 @@ class DistributionChart {
                          let height = scales[d.code](d.val);
                          return base - height; });
 
-        let container = this.svg.append("g").attr("id", direction + type);
+        let container = this.svg.select('#' + direction + type);
 
         let groups = container.selectAll("g")
                               .data(fData);
 
         let enterGroups = groups.enter()
                                 .append("g");
+        enterGroups.append("path");
+        enterGroups.append("line");
 
-        let paths = enterGroups.append("path")
-                               .datum((d) => {
-                                   return d;
-                               });
+        groups = enterGroups.merge(groups);
+
+        let paths = groups.select("path")
+                          .datum((d) => {
+                              return d;
+                          });
 
         paths.attr('d', area)
              .style("fill", "blue");
 
         groups = container.selectAll("g")
                           .data(selectedCountryData);
-        let enterLines = groups.append("line");
+        let lines = groups.select("line");
                                
-        enterLines.attr("x1", (d) => {
+        lines.attr("x1", (d) => {
             let rightShift = that.groupWidth * position;
             let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d[0].code] * (d[0].rank + 1);
             return rightShift + that.groupMargin.left + offset;
@@ -160,6 +196,15 @@ class DistributionChart {
 
     };
 
+    /**
+     * Filters data based on direction (import/export) and type (percapita or absolute)
+     *
+     * @param data data filtered to a single year
+     * @param direction string that is either "import" or "export"
+     * @param type string that is either "percap" or "abs"
+     *
+     * @return output a filtered version of data, based on @direction and @type
+     */
     filterData(data, direction, type){
 
         let that = this;
@@ -185,6 +230,15 @@ class DistributionChart {
 
     };
 
+    /**
+     * Filters data to only include selected country
+     *
+     * @param data filtered dataset, already filtered by this.filterData
+     * @param country 3 char id indicating selected country
+     *
+     * @return output filtered data including only selected country
+     */
+
     getSelectedCountryData(data, country){
 
         let output = [];
@@ -199,6 +253,14 @@ class DistributionChart {
 
         return output;
     };
+
+    /**
+     * Generates a list of scales for each code in a filtered dataset
+     *
+     * @param data data already filtered by this.filterData
+     * 
+     * @return outScales object with product codes as keys, and values as d3 scales
+     */
     
     generateScales(data){
 
@@ -219,6 +281,21 @@ class DistributionChart {
 
         return outScales;
     };
+
+    /*
+     * Parses and processes raw data. Can generate val as per capita or absolute
+     *
+     * @param data data already filtered by this.filterData
+     * @param type string, either "percap" or "abs", indicates type of value to return
+     *
+     * @return info list where each row in data is represented as follows:
+     *         rank: Rank of given country (compared to the world) for the given code and direction
+     *         val: The metric for the given country, code, and direction. Can be absolute import/export, or per capita
+     *         code: Product code for row
+     *         direction: indicates whether import or export
+     *         type: indicates whether is absolute or per capita value
+     *         orig: the country of the data
+     */
         
     parse (data, type){
 
