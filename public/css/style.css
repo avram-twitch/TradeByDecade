@@ -28,3 +28,14 @@
     stroke-opacity: 1;
     pointer-events: none;
 }
+.d3-tip {
+    line-height: 1;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-style: groove;
+    padding: 4px;
+    background: #FFFFFF;
+    color: rgba(0, 0, 0, 0.8);
+    border-radius: 10px;
+    pointer-events: none;
+}

@@ -36,7 +36,14 @@ class WorldChart {
 
         this.projection = d3.geoWinkel3().scale(worldMapScale).translate([worldMapWidth/2, this.svgHeight/2]);
 
+        this.highlightedCountryID = 0;
         this.selectedCountryID = 0;
+
+        this.tip = d3.tip().attr('class', 'd3-tip')
+                .direction('w')
+                .offset(function() {
+                    return [0,0];
+                })
     };
 
     loadedData(tradeData) {
@@ -71,8 +78,27 @@ class WorldChart {
                 }
             }
         }
-        d3.select("#path-" + this.selectedCountryID ).attr("fill", "green");
-        d3.select("#path-" + this.highlightedCountryID ).attr("fill", "gray");
+        let selectedNode = d3.select("#path-" + this.selectedCountryID );
+        if( selectedNode != null ) {
+            selectedNode.attr("fill", "green");
+        }
+        let highlightedNode = d3.select("#path-" + this.highlightedCountryID );
+        if( highlightedNode != null ) {
+            highlightedNode.attr("fill", "gray");
+        }
+        if( this.highlightedCountryID != 0 ) {
+            for( let datum of this.tradeData ) {
+                if( datum.orig == this.highlightedCountryID.toLowerCase() ) {
+                    console.log(datum);
+                    break;
+                }
+            }
+        }
+    }
+
+    tooltip_render(tooltip_data) {
+        let text = "<h2>" + tooltip_data.countryID + "</h2>";
+        return text;
     }
 
     createCharts() {
@@ -88,7 +114,19 @@ class WorldChart {
         // Bind data and create one path per GeoJSON feature
         let pathSelection = this.svg.selectAll("path")
                 .data(countryData);
-
+        this.tip.html((d)=> {
+            let tooltip_data = {
+                    "countryID": d.id
+                };
+			return this.tooltip_render(tooltip_data);
+        });
+        
+		this.svg.call(this.tip);
+        this.svg.on("mouseover", () => {
+            d3.event.stopPropagation();
+            this.highlightedCountryID = 0;
+            this.updateCharts();
+        });
         let pathEnterSelection = pathSelection.enter()
                 .append("path")
                 .attr("d", d => path(d))
@@ -96,14 +134,13 @@ class WorldChart {
                 .on("mouseover", d => {
                     d3.event.stopPropagation();
                     this.highlightedCountryID = d.id;
-                    console.log(d);
                     this.updateCharts();
+                    this.tip.show(d);
                 })
+                .on("mouseout", this.tip.hide)
                 .on("click", d => {
                     d3.event.stopPropagation();
                     this.updateFunction(d.id);
-                    // this.selectedCountryID = d.id;
-                    // this.updateCharts();
                 });
         pathSelection.exit().remove();
         pathSelection = pathEnterSelection.merge(pathSelection);
@@ -122,5 +159,6 @@ class WorldChart {
                 .datum({type: "Sphere"})
                 .classed('worldMapOutline', true)
                 .attr("d", path);
+
     };
 }
