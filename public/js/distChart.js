@@ -61,7 +61,7 @@ class DistributionChart {
 
         for (let i = 0; i < argsList.length; i++)
         {
-            this.createCharts(data, argsList[i]);
+            this.createCharts(data, argsList[i], country);
         }
 
     };
@@ -88,7 +88,7 @@ class DistributionChart {
 
     };
 
-    createCharts(data, args){
+    createCharts(data, args, country){
 
         let that = this;
 
@@ -97,12 +97,13 @@ class DistributionChart {
         let position = +args.position;
 
         let fData = this.filterData(data, direction, type);
+        let selectedCountryData = this.getSelectedCountryData(fData, country);
         let scales = this.generateScales(fData);
-        let dataSize = fData.length;
 
-        let dataSizes = {}
+        console.log(selectedCountryData);
 
-        console.log(fData);
+        let dataSizes = {};
+
         for (let i = 0; i < fData.length; i++)
         {
             dataSizes[fData[i][0].code] = fData[i].length;
@@ -128,7 +129,6 @@ class DistributionChart {
         let enterGroups = groups.enter()
                                 .append("g");
 
-
         let paths = enterGroups.append("path")
                                .datum((d) => {
                                    return d;
@@ -136,6 +136,26 @@ class DistributionChart {
 
         paths.attr('d', area)
              .style("fill", "blue");
+
+        groups = container.selectAll("g")
+                          .data(selectedCountryData);
+        let enterLines = groups.append("line");
+                               
+        enterLines.attr("x1", (d) => {
+            let rightShift = that.groupWidth * position;
+            let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d[0].code] * (d[0].rank + 1);
+            return rightShift + that.groupMargin.left + offset;
+        })
+        .attr("x2", (d) => {
+            let rightShift = that.groupWidth * position;
+            let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d[0].code] * (d[0].rank + 1);
+            return rightShift + that.groupMargin.left + offset;
+        })
+        .attr("y1", (d) => that.allYScale(+d[0].code))
+        .attr("y2", (d) => that.allYScale(+d[0].code) + that.groupHeight - that.groupMargin.top - that.groupMargin.bottom)
+        .attr("stroke", "red");
+
+                                      
                                 
 
     };
@@ -163,6 +183,21 @@ class DistributionChart {
 
         return output;
 
+    };
+
+    getSelectedCountryData(data, country){
+
+        let output = [];
+
+        for (let i = 0; i < data.length; i++)
+        {
+            let tmp = data[i].filter(function(d) {
+                return d.orig == country;
+            });
+            output.push(tmp)
+        }
+
+        return output;
     };
     
     generateScales(data){
@@ -210,11 +245,12 @@ class DistributionChart {
 
         data.forEach( function (row, i) {
             info.push({
-                rank: data.length - i,
+                rank: i,
                 val: getVal(row),
                 code: row.code,
                 direction: row.type,
-                type: type
+                type: type,
+                orig: row.orig
             });
         });
 
