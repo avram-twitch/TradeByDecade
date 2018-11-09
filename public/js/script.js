@@ -28,6 +28,7 @@ d3.json("data/data.json").then(tradeData => {
 
     d3.csv('data/country_names.csv').then( countryNames => {
         createDropdownMenu(countryNames, updatePlot);
+        worldMap.addCountryNameData(countryNames);
     });
 
     // Select USA by default

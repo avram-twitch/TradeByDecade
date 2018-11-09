@@ -28,6 +28,12 @@
     stroke-opacity: 1;
     pointer-events: none;
 }
+.countryOutline {
+    fill: rgba(121, 37, 116, 0.527);
+    stroke: rgb(255, 79, 246);
+    stroke-width: 1px;
+    stroke-opacity: 1;
+}
 .d3-tip {
     line-height: 1;
     padding-left: 4px;

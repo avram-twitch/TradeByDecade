@@ -54,6 +54,13 @@ class WorldChart {
         this.worldJson = world;
     }
 
+    addCountryNameData(countryNameData) {
+        this.countryNameLookup = [];
+        for( let datum of countryNameData ) {
+            this.countryNameLookup[datum.id_3char] = datum.name;
+        }
+    }
+
     addUpdateFunction(updateFunction) {
         this.updateFunction = updateFunction;
     }
@@ -64,17 +71,27 @@ class WorldChart {
     }
 
     updateCharts() {
-        this.countryPathElements.attr("fill", "black");
-        if( this.selectedCountryID != 0 ) {
-            //console.log("searching for " + this.selectedCountryID.toLowerCase() + " in data");
+        this.countryPathElements.classed("countryOutline", false).attr("fill", "black");
+        if( this.tradeData != null ) {
+            let foundHighlight = false;
+            let foundSelected = false;
             for( let datum of this.tradeData ) {
-                if( datum.orig == this.selectedCountryID.toLowerCase() ) {
-                    // console.log("chose datum:");
-                    // console.log(datum);
+                if( this.highlightedCountryID != 0 
+                        && !foundHighlight 
+                        && datum.orig == this.highlightedCountryID.toLowerCase()) {
+                    for( let dest of Object.keys(datum.countries) ) {
+                        d3.select("#path-" + dest.toUpperCase() )
+                                .classed("countryOutline", true)
+                    }
+                    foundHighlight = true;
+                }
+                if( this.selectedCountryID != 0 
+                        && !foundSelected 
+                        && datum.orig == this.selectedCountryID.toLowerCase()) {
                     for( let dest of Object.keys(datum.countries) ) {
                         d3.select("#path-" + dest.toUpperCase() ).attr("fill", "red");
                     }
-                    break;
+                    foundSelected = true;
                 }
             }
         }
@@ -86,18 +103,10 @@ class WorldChart {
         if( highlightedNode != null ) {
             highlightedNode.attr("fill", "gray");
         }
-        if( this.highlightedCountryID != 0 ) {
-            for( let datum of this.tradeData ) {
-                if( datum.orig == this.highlightedCountryID.toLowerCase() ) {
-                    console.log(datum);
-                    break;
-                }
-            }
-        }
     }
 
     tooltip_render(tooltip_data) {
-        let text = "<h2>" + tooltip_data.countryID + "</h2>";
+        let text = "<h4>" + tooltip_data.title + "</h4>";
         return text;
     }
 
@@ -115,8 +124,12 @@ class WorldChart {
         let pathSelection = this.svg.selectAll("path")
                 .data(countryData);
         this.tip.html((d)=> {
+            let name = d.id;
+            if( this.countryNameLookup != null ) {
+                name = this.countryNameLookup[d.id.toLowerCase()];
+            }
             let tooltip_data = {
-                    "countryID": d.id
+                    "title": name
                 };
 			return this.tooltip_render(tooltip_data);
         });
