@@ -16,8 +16,6 @@ class CountryData {
 class WorldChart {
 
     constructor (){
-
-
         let worldChart = d3.select("#worldHeatChart");
         this.margin = {top: 10, right: 20, bottom: 20, left: 50};
         this.svgBounds = worldChart.node().getBoundingClientRect();
@@ -37,11 +35,40 @@ class WorldChart {
                             .attr("height", this.svgHeight);
 
         this.projection = d3.geoWinkel3().scale(worldMapScale).translate([worldMapWidth/2, this.svgHeight/2]);
+
+        this.selectedCountryID = 0;
     };
 
-    createCharts(world){
+    loadedData(tradeData) {
+        this.tradeData = tradeData;
+    }
 
-        let geojson = topojson.feature(world, world.objects.countries);
+    loadedWorld(world) {
+        this.worldJson = world;
+    }
+
+    updateCharts() {
+        this.countryPathElements.attr("fill", "black");
+        if( this.selectedCountryID != 0 ) {
+            //console.log("searching for " + this.selectedCountryID.toLowerCase() + " in data");
+            for( let datum of this.tradeData ) {
+                if( datum.orig == this.selectedCountryID.toLowerCase() ) {
+                    // console.log("chose datum:");
+                    // console.log(datum);
+                    for( let dest of Object.keys(datum.countries) ) {
+                        d3.select("#path-" + dest.toUpperCase() ).attr("fill", "red");
+                    }
+                    break;
+                }
+            }
+        }
+        d3.select("#path-" + this.selectedCountryID ).attr("fill", "green");
+        d3.select("#path-" + this.highlightedCountryID ).attr("fill", "gray");
+    }
+
+    createCharts() {
+
+        let geojson = topojson.feature(this.worldJson, this.worldJson.objects.countries);
 
         let countryData = geojson.features.map(country => {
             return new CountryData(country.type, country.id, country.properties, country.geometry);
@@ -51,24 +78,37 @@ class WorldChart {
         
         // Bind data and create one path per GeoJSON feature
         let pathSelection = this.svg.selectAll("path")
-            .data(countryData)
-            .enter()
-            .append("path")
-            .attr("d", d => path(d))
-            .attr("id", d => 'path-' + d.id)
-            .on("click", d => {
-                d3.event.stopPropagation();
-                this.updateCountry(d.id);
-            });
+                .data(countryData);
+
+        let pathEnterSelection = pathSelection.enter()
+                .append("path")
+                .attr("d", d => path(d))
+                .attr("id", d => 'path-' + d.id)
+                .on("mouseover", d => {
+                    d3.event.stopPropagation();
+                    this.highlightedCountryID = d.id;
+                    console.log(d);
+                    this.updateCharts();
+                })
+                .on("click", d => {
+                    d3.event.stopPropagation();
+                    this.selectedCountryID = d.id;
+                    this.updateCharts();
+                });
+        pathSelection.exit().remove();
+        pathSelection = pathEnterSelection.merge(pathSelection);
+
+        this.countryPathElements = pathSelection;
 
         console.log("finished adding normal map components, now adding graticule");
         let graticule = d3.geoGraticule();
-        this.svg.append('path')
+        let outlineGroup = this.svg.append("g");
+        outlineGroup.append("path")
                 .datum(graticule)
-                .attr('class', 'worldMapGraticule')
+                .classed('worldMapGraticule', true)
                 .attr('d', path);
 
-        this.svg.append("path")
+        outlineGroup.append("path")
                 .datum({type: "Sphere"})
                 .classed('worldMapOutline', true)
                 .attr("d", path);
