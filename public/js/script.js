@@ -14,7 +14,7 @@ d3.json("data/data.json").then(tradeData => {
     let filtered = tradeData.filter(function(d) {
         return d.year == "1980";
     });
-    distChart.update(filtered);
+    distChart.update(filtered, "usa");
 
     worldMap.loadedData(filtered);
 });
