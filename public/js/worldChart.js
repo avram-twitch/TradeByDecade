@@ -47,6 +47,15 @@ class WorldChart {
         this.worldJson = world;
     }
 
+    addUpdateFunction(updateFunction) {
+        this.updateFunction = updateFunction;
+    }
+
+    selectedCountry(filteredData, countryID) {
+        this.selectedCountryID = countryID.toUpperCase();
+        this.updateCharts();
+    }
+
     updateCharts() {
         this.countryPathElements.attr("fill", "black");
         if( this.selectedCountryID != 0 ) {
@@ -92,8 +101,9 @@ class WorldChart {
                 })
                 .on("click", d => {
                     d3.event.stopPropagation();
-                    this.selectedCountryID = d.id;
-                    this.updateCharts();
+                    this.updateFunction(d.id);
+                    // this.selectedCountryID = d.id;
+                    // this.updateCharts();
                 });
         pathSelection.exit().remove();
         pathSelection = pathEnterSelection.merge(pathSelection);
