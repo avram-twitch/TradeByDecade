@@ -5,6 +5,6 @@ d3.json("data/filtered.json").then(data => {
 //    let filtered = data.filter(function(d) {
 //        return d.year == "1980";
 //    });
-    distChart.update(data);
+    distChart.update(data, "usa");
 });
 

@@ -11,6 +11,18 @@ class DistributionChart {
         this.worldHeatMap = worldHeatMap;
         this.trendChart = trendChart;
         this.allCodes = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+        this.codeSemantics = {
+                               "1":"Food",
+                               "2":"Crude Materials",
+                               "3":"Fuels",
+                               "4":"Animal/Vegetable Oils",
+                               "5":"Chemicals",
+                               "6":"Manufactured Goods",
+                               "7":"Machinery",
+                               "8":"Misc Manufactured",
+                               "9":"Other"}
+
+        this.headers = ["Product Type", "Exports", "Exports per Capita", "Imports", "Imports per Capita"];
 
         let distChart = d3.select("#distChart");
         this.margin = {top: 10, right: 20, bottom: 20, left: 50};
@@ -19,8 +31,8 @@ class DistributionChart {
         this.svgHeight = this.svgBounds.height;
 
         this.groupPadding = 0.1;
-        this.groupHeight = (this.svgHeight - this.margin.top - this.margin.bottom) / this.allCodes.length;
-        this.groupWidth = (this.svgWidth - this.margin.left - this.margin.right) / 4;
+        this.groupHeight = (this.svgHeight - this.margin.top - this.margin.bottom) / (this.allCodes.length + 1);
+        this.groupWidth = (this.svgWidth - this.margin.left - this.margin.right) / 5;
         this.groupMargin = {top: this.groupHeight * this.groupPadding, 
                             right: this.groupWidth * this.groupPadding, 
                             bottom:this.groupHeight * this.groupPadding, 
@@ -31,23 +43,47 @@ class DistributionChart {
                             .attr("height", this.svgHeight);
 
         this.allYScale = d3.scaleLinear()
-                          .domain([0, this.allCodes.length])
+                          .domain([0, this.allCodes.length + 1])
                           .range([this.margin.bottom, this.svgHeight - this.margin.bottom - this.margin.top])
     };
 
 
-    update (data){
+    update (data, country){
 
         let that = this;
 
-        let argsList = [{'direction': 'export', 'type': 'abs', 'position': 0},
-                        {'direction': 'export', 'type': 'percap', 'position': 1},
-                        {'direction': 'import', 'type': 'abs', 'position': 2},
-                        {'direction': 'import', 'type': 'percap', 'position': 3}];
+        this.createHeaders();
+
+        let argsList = [{'direction': 'export', 'type': 'abs', 'position': 1},
+                        {'direction': 'export', 'type': 'percap', 'position': 2},
+                        {'direction': 'import', 'type': 'abs', 'position': 3},
+                        {'direction': 'import', 'type': 'percap', 'position': 4}];
 
         for (let i = 0; i < argsList.length; i++)
         {
             this.createCharts(data, argsList[i]);
+        }
+
+    };
+
+    createHeaders(){
+
+        for (let i = 0; i < this.allCodes.length; i++)
+        {
+            let tmp = this.svg.append("text");
+            tmp.text(this.codeSemantics[this.allCodes[i]]);
+            tmp.attr("x", this.groupMargin.left)
+               .attr("y", this.allYScale(+this.allCodes[i] + .5));
+            tmp.style("stroke", "black");
+        }
+
+        for (let i = 0; i < this.headers.length; i++)
+        {
+            let tmp = this.svg.append("text");
+            tmp.text(this.headers[i]);
+            tmp.attr("x", this.groupMargin.left + (i * this.groupWidth))
+               .attr("y", this.allYScale(0.5))
+               .style("stroke", "black");
         }
 
     };
@@ -75,12 +111,12 @@ class DistributionChart {
         let area = d3.area()
                      .x(function(d,i) { 
                          let rightShift = that.groupWidth * position;
-                         let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d.code] * i; 
+                         let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d.code] * (i + 1); 
                          return rightShift + that.groupMargin.left + offset;
                      })
-                     .y0((d) => that.allYScale(d.code))
+                     .y0((d) => that.allYScale(+d.code + 1))
                      .y1(function(d,i) { 
-                         let base = that.allYScale(d.code);
+                         let base = that.allYScale(+d.code + 1);
                          let height = scales[d.code](d.val);
                          return base - height; });
 
