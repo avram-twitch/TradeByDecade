@@ -5,11 +5,12 @@ class CountryData {
      * @param properties contains the value mappings for the data
      * @param geometry contains array of coordinates to draw the country paths
      */
-    constructor(type, id, properties, geometry) {
+    constructor(type, id, properties, geometry, name) {
         this.type = type;
         this.id = id;
         this.properties = properties;
         this.geometry = geometry;
+        this.name = name;
     }
 }
 
@@ -50,15 +51,8 @@ class WorldChart {
         this.tradeData = tradeData;
     }
 
-    loadedWorld(world) {
-        this.worldJson = world;
-    }
-
-    addCountryNameData(countryNameData) {
-        this.countryNameLookup = [];
-        for( let datum of countryNameData ) {
-            this.countryNameLookup[datum.id_3char] = datum.name;
-        }
+    loadedWorld(countryData) {
+        this.countryData = countryData;
     }
 
     addUpdateFunction(updateFunction) {
@@ -66,7 +60,7 @@ class WorldChart {
     }
 
     selectedCountry(filteredData, countryID) {
-        this.selectedCountryID = countryID.toUpperCase();
+        this.selectedCountryID = countryID;
         this.updateCharts();
     }
 
@@ -78,18 +72,18 @@ class WorldChart {
             for( let datum of this.tradeData ) {
                 if( this.highlightedCountryID != 0 
                         && !foundHighlight 
-                        && datum.orig == this.highlightedCountryID.toLowerCase()) {
+                        && datum.orig == this.highlightedCountryID) {
                     for( let dest of Object.keys(datum.countries) ) {
-                        d3.select("#path-" + dest.toUpperCase() )
+                        d3.select("#path-" + dest )
                                 .classed("countryOutline", true)
                     }
                     foundHighlight = true;
                 }
                 if( this.selectedCountryID != 0 
                         && !foundSelected 
-                        && datum.orig == this.selectedCountryID.toLowerCase()) {
+                        && datum.orig == this.selectedCountryID) {
                     for( let dest of Object.keys(datum.countries) ) {
-                        d3.select("#path-" + dest.toUpperCase() ).attr("fill", "red");
+                        d3.select("#path-" + dest ).attr("fill", "red");
                     }
                     foundSelected = true;
                 }
@@ -112,24 +106,15 @@ class WorldChart {
 
     createCharts() {
 
-        let geojson = topojson.feature(this.worldJson, this.worldJson.objects.countries);
-
-        let countryData = geojson.features.map(country => {
-            return new CountryData(country.type, country.id, country.properties, country.geometry);
-        });
         let path = d3.geoPath()
                 .projection(this.projection);
         
         // Bind data and create one path per GeoJSON feature
         let pathSelection = this.svg.selectAll("path")
-                .data(countryData);
+                .data(this.countryData);
         this.tip.html((d)=> {
-            let name = d.id;
-            if( this.countryNameLookup != null ) {
-                name = this.countryNameLookup[d.id.toLowerCase()];
-            }
             let tooltip_data = {
-                    "title": name
+                    "title": d.name
                 };
 			return this.tooltip_render(tooltip_data);
         });
@@ -153,6 +138,7 @@ class WorldChart {
                 .on("mouseout", this.tip.hide)
                 .on("click", d => {
                     d3.event.stopPropagation();
+                    this.highlightedCountryID = 0;
                     this.updateFunction(d.id);
                 });
         pathSelection.exit().remove();
