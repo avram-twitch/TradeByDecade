@@ -2,6 +2,7 @@
 
 let worldMap = new WorldChart();
 let distChart = new DistributionChart(0,0);
+let trendChart = new TrendChart();
 
 console.log("Loading country name data");
 let countryNameData = d3.csv('data/country_names.csv');
@@ -43,6 +44,7 @@ d3.json("data/data.json").then(tradeData => {
     let updatePlot = function(countryValue) {
         distChart.update(filtered, countryValue);
         worldMap.selectedCountry(filtered, countryValue);
+        trendChart.update(countryValue, '2', tradeData);
     };
 
     worldMap.addUpdateFunction(updatePlot);
