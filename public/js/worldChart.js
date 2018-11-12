@@ -23,6 +23,46 @@ class WorldChart {
         this.svgWidth = this.svgBounds.width - this.margin.left - this.margin.right;
         this.svgHeight = this.svgBounds.height;
 
+        let buttonWrapper = worldChart.append("div");
+
+        this.volumeButton = buttonWrapper.append("label")
+                .classed("worldChartOption", true)
+                .classed("worldChartOptionSelected", true)
+                .on("click", () => {
+                    this.selectedOption(this.volumeButton);
+                })
+                .on("mouseover", () => {
+                    this.volumeButton.classed("worldChartOptionHovered", true);
+                })
+                .on("mouseout", () => {
+                    this.volumeButton.classed("worldChartOptionHovered", false);
+                })
+                .text("Volume");
+        this.perCapitaButton = buttonWrapper.append("label")
+                .classed("worldChartOption", true)
+                .on("click", () => {
+                    this.selectedOption(this.perCapitaButton);
+                })
+                .on("mouseover", () => {
+                    this.perCapitaButton.classed("worldChartOptionHovered", true);
+                })
+                .on("mouseout", () => {
+                    this.perCapitaButton.classed("worldChartOptionHovered", false);
+                })
+                .text("Per Capita");
+        this.dependencyButton = buttonWrapper.append("label")
+                .classed("worldChartOption", true)
+                .on("click", () => {
+                    this.selectedOption(this.dependencyButton);
+                })
+                .on("mouseover", () => {
+                    this.dependencyButton.classed("worldChartOptionHovered", true);
+                })
+                .on("mouseout", () => {
+                    this.dependencyButton.classed("worldChartOptionHovered", false);
+                })
+                .text("Dependency");
+
         this.verticalMargin = 20;
         this.horizontalMargin = 20;
 
@@ -30,8 +70,7 @@ class WorldChart {
         let geoWinkel3Ratio = 157.0/90;
         let worldMapWidth = worldMapScale*geoWinkel3Ratio*3;
         //let worldMapWidth = this.svgHeight*geoWinkel3Ratio;
-        this.svg = worldChart.append("svg")
-                            .classed("worldChartSVG", true)
+        this.svg = worldChart.append("div").append("svg")
                             .attr("width", worldMapWidth)
                             .attr("height", this.svgHeight);
 
@@ -46,6 +85,14 @@ class WorldChart {
                     return [0,0];
                 })
     };
+
+    selectedOption(button) {
+        this.volumeButton.classed("worldChartOptionSelected", false);
+        this.perCapitaButton.classed("worldChartOptionSelected", false);
+        this.dependencyButton.classed("worldChartOptionSelected", false);
+        button.classed("worldChartOptionSelected", true);
+        this.updateCharts();
+    }
 
     loadedData(tradeData) {
         this.tradeData = tradeData;

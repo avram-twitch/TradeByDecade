@@ -9,10 +9,6 @@
     width: 45%;
     display: inline-block;
     position: relative;
-    outline: 1px solid gray;
-}
-.worldChartSVG {
-    outline: 1px solid black;
 }
 .worldMapGraticule {
     fill: none;
@@ -28,18 +24,28 @@
     stroke-opacity: 1;
     pointer-events: none;
 }
+.worldChartOption {
+    margin: 4px 4px 4px 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-radius: 4px;
+    color: rgba(0, 0, 0, 1);
+}
+.worldChartOptionHovered {
+    background-color: rgb(237, 180, 155);
+}
+.worldChartOptionSelected {
+    background-color: rgb(255, 127, 80);
+}
 .countryOutline {
-    fill: rgba(121, 37, 116, 0.527);
     stroke: rgb(255, 79, 246);
     stroke-width: 1px;
     stroke-opacity: 1;
 }
 .d3-tip {
-    line-height: 1;
     padding-left: 4px;
     padding-right: 4px;
     border-style: groove;
-    padding: 4px;
     background: #FFFFFF;
     color: rgba(0, 0, 0, 0.8);
     border-radius: 10px;
