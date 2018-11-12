@@ -39,6 +39,8 @@ d3.json("data/data.json").then(tradeData => {
     let filtered = tradeData.filter(function(d) {
         return d.year == "1980";
     });
+    console.log("Filtered trade data");
+    console.log(filtered);
     worldMap.loadedData(filtered);
 
     let updatePlot = function(countryValue) {

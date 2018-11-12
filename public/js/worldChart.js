@@ -19,6 +19,8 @@ class WorldChart {
     constructor (){
         let worldChart = d3.select("#worldHeatChart");
         this.margin = {top: 10, right: 20, bottom: 20, left: 50};
+        this.legendHeight = 120;
+        this.colorRange = ["#000000", "#FF0000"];
         this.svgBounds = worldChart.node().getBoundingClientRect();
         this.svgWidth = this.svgBounds.width - this.margin.left - this.margin.right;
         this.svgHeight = this.svgBounds.height;
@@ -74,6 +76,15 @@ class WorldChart {
                             .attr("width", worldMapWidth)
                             .attr("height", this.svgHeight);
 
+        let svgDefs = this.svg.append("defs");
+        let legendGradient = svgDefs.append("linearGradient").attr('id', 'legendGradient').attr("x2", "0%").attr("y2", "100%");
+        legendGradient.append("stop").attr("stop-color", this.colorRange[1]).attr("offset", "0");
+        legendGradient.append("stop").attr("stop-color", this.colorRange[0]).attr("offset", "1");
+
+        this.legendGroup = this.svg.append("g").attr("transform", "translate(0,20)");
+        this.legendGroup.append("rect").attr("width", 10).attr("height", this.legendHeight).attr("fill", "url(#legendGradient)");
+        this.legendAxisGroup = this.legendGroup.append("g").attr("transform", "translate(10, 0)");
+
         this.projection = d3.geoWinkel3().scale(worldMapScale).translate([worldMapWidth/2, this.svgHeight/2]);
 
         this.highlightedCountryID = 0;
@@ -112,28 +123,35 @@ class WorldChart {
     }
 
     updateCharts() {
-        this.countryPathElements.classed("countryOutline", false).attr("fill", "black");
+        this.countryPathElements.classed("countryOutline", false).attr("fill", "white");
         if( this.tradeData != null ) {
-            let foundHighlight = false;
-            let foundSelected = false;
-            for( let datum of this.tradeData ) {
-                if( this.highlightedCountryID != 0 
-                        && !foundHighlight 
-                        && datum.orig == this.highlightedCountryID) {
-                    for( let dest of Object.keys(datum.countries) ) {
-                        d3.select("#path-" + dest )
-                                .classed("countryOutline", true)
+
+            if( this.selectedCountryID != 0 ) {
+                let totalExportsPerCountry = [];
+                let onlySelectedCountryData = this.tradeData.filter(datum => {
+                    return datum.orig == this.selectedCountryID;
+                });
+                let onlyExportData = onlySelectedCountryData.filter(datum => {
+                    return datum.type == "export";
+                });
+                for(let productType of onlyExportData) {
+                    for(let country of Object.keys(productType.countries)) {
+                        if( totalExportsPerCountry[country] ) {
+                            totalExportsPerCountry[country] += +productType.countries[country];
+                        }
+                        else {
+                            totalExportsPerCountry[country] = +productType.countries[country];
+                        }
                     }
-                    foundHighlight = true;
                 }
-                if( this.selectedCountryID != 0 
-                        && !foundSelected 
-                        && datum.orig == this.selectedCountryID) {
-                    for( let dest of Object.keys(datum.countries) ) {
-                        d3.select("#path-" + dest ).attr("fill", "red");
-                    }
-                    foundSelected = true;
-                }
+                let max = Math.max(...Object.entries(totalExportsPerCountry).filter(d => d[0] != "wld").map(d => d[1]));
+                let colorScale = d3.scaleLinear().domain([0, max]).range(this.colorRange);
+                let axisScale = d3.scaleLinear().domain([max, 0]).range([0,this.legendHeight-1]).nice();
+                this.legendAxisGroup.call(d3.axisRight().scale(axisScale).tickFormat(d3.format("~s")));
+                Object.keys(totalExportsPerCountry).map(d => {
+                    d3.select("#path-" + d )
+                                 .attr("fill", colorScale(totalExportsPerCountry[d]));
+                });
             }
         }
         let selectedNode = d3.select("#path-" + this.selectedCountryID );
