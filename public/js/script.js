@@ -1,5 +1,3 @@
-
-
 let worldMap = new WorldChart();
 let distChart = new DistributionChart(0,0);
 let trendChart = new TrendChart();

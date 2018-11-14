@@ -176,7 +176,7 @@ class DistributionChart {
 
         groups = container.selectAll("g")
                           .data(selectedCountryData);
-        let lines = groups.selectAll("line");
+        let lines = groups.select("line");
                                
         lines.attr("x1", (d) => {
             let rightShift = that.groupWidth * position;
