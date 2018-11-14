@@ -6,10 +6,10 @@ class DistributionChart {
      * @param worldHeatMap an instance of --WorldHeatMap-- class
      * @param trendChart an instance of -- TrendChart-- class
      */
-    constructor (worldHeatMap, trendChart){
+    constructor (){
 
-        this.worldHeatMap = worldHeatMap;
-        this.trendChart = trendChart;
+        // Set codes/semantics variables
+        
         this.allCodes = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
         this.codeSemantics = {
                                "1":"Food",
@@ -24,11 +24,15 @@ class DistributionChart {
 
         this.headers = ["Product Type", "Exports", "Exports per Capita", "Imports", "Imports per Capita"];
 
-        let distChart = d3.select("#distChart");
+        // Set SVG dimensions
+        
+        this.distChart = d3.select("#distChart");
         this.margin = {top: 10, right: 20, bottom: 20, left: 50};
-        this.svgBounds = distChart.node().getBoundingClientRect();
+        this.svgBounds = this.distChart.node().getBoundingClientRect();
         this.svgWidth = this.svgBounds.width - this.margin.left - this.margin.right;
         this.svgHeight = this.svgBounds.height;
+
+        // Set Group Dimensions
 
         this.groupPadding = 0.1;
         this.groupHeight = (this.svgHeight - this.margin.top - this.margin.bottom) / (this.allCodes.length + 1);
@@ -38,14 +42,22 @@ class DistributionChart {
                             bottom:this.groupHeight * this.groupPadding, 
                             left:this.groupWidth * this.groupPadding};
 
-        this.svg = distChart.append("svg")
-                            .attr("width", this.svgWidth)
-                            .attr("height", this.svgHeight);
+        this.createChart();
+        this.createHeaders();
+
+    };
+
+    createChart() {
+
+        // Create base SVG elements
+        
+        this.svg = this.distChart.append("svg")
+                                 .attr("width", this.svgWidth)
+                                 .attr("height", this.svgHeight);
 
         this.allYScale = d3.scaleLinear()
-                          .domain([0, this.allCodes.length + 1])
-                          .range([this.margin.bottom, this.svgHeight - this.margin.bottom - this.margin.top])
-        this.createHeaders();
+                           .domain([0, this.allCodes.length + 1])
+                           .range([this.margin.bottom, this.svgHeight - this.margin.bottom - this.margin.top])
 
         this.argsList = [{'direction': 'export', 'type': 'abs', 'position': 1},
                          {'direction': 'export', 'type': 'percap', 'position': 2},
@@ -57,23 +69,6 @@ class DistributionChart {
             let direction = this.argsList[i].direction;
             let type = this.argsList[i].type;
             this.svg.append("g").attr("id", direction + type);
-        }
-    };
-
-
-    /*
-     * Updates chart given selected country
-     *
-     * @param data import/export data filtered to a single year
-     * @param country 3 character id of selected country
-     */
-    update (data, selectedCountry){
-
-        let that = this;
-
-        for (let i = 0; i < this.argsList.length; i++)
-        {
-            this.updateCharts(data, this.argsList[i], selectedCountry);
         }
 
     };
@@ -103,6 +98,25 @@ class DistributionChart {
 
     };
 
+
+    /*
+     * Updates chart given selected country
+     *
+     * @param data import/export data filtered to a single year
+     * @param country 3 character id of selected country
+     */
+    update (data, selectedCountry){
+
+        this.data = data;
+
+        for (let i = 0; i < this.argsList.length; i++)
+        {
+            this.updateCharts(data, this.argsList[i], selectedCountry);
+        }
+
+    };
+
+
     /**
      * Given selected country and data args, generates a column of the distribution chart
      *
@@ -113,9 +127,6 @@ class DistributionChart {
 
     updateCharts(data, args, country){
 
-        // TODO Are lines correct (They appear all the same)
-        // definitely not. In order to pass data to child elements you have to use selectAll, not select
-        
         // TODO Handle cases where there is no data for selected country
 
         // TODO Tooltip that shows countries
@@ -123,6 +134,8 @@ class DistributionChart {
         // TODO (Maybe) use kernel function to show distribution
         
         // TODO Enable click to impact rest of chart
+        
+        // Set variables, scales, and filter data
         
         let that = this;
 
@@ -134,6 +147,7 @@ class DistributionChart {
         let selectedCountryData = this.getSelectedCountryData(fData, country);
         let scales = this.generateScales(fData);
 
+        // Determine size of data subset for each code
 
         let dataSizes = {};
 
@@ -159,6 +173,9 @@ class DistributionChart {
         let groups = container.selectAll("g")
                               .data(fData);
 
+        groups.exit().remove();
+        // Create new groups, paths, and lines
+        
         let enterGroups = groups.enter()
                                 .append("g");
         enterGroups.append("path");
@@ -166,6 +183,7 @@ class DistributionChart {
 
         groups = enterGroups.merge(groups);
 
+        // Update Area Charts
         let paths = groups.select("path")
                           .datum((d) => {
                               return d;
@@ -174,11 +192,13 @@ class DistributionChart {
         paths.attr('d', area)
              .style("fill", "blue");
 
+        // Update Selected Country Lines
         groups = container.selectAll("g")
                           .data(selectedCountryData);
         let lines = groups.select("line");
                                
         lines.attr("x1", (d) => {
+            console.log(d[0]);
             let rightShift = that.groupWidth * position;
             let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d[0].code] * (d[0].rank + 1);
             return rightShift + that.groupMargin.left + offset;
@@ -191,9 +211,6 @@ class DistributionChart {
         .attr("y1", (d) => that.allYScale(+d[0].code))
         .attr("y2", (d) => that.allYScale(+d[0].code) + that.groupHeight - that.groupMargin.top - that.groupMargin.bottom)
         .attr("stroke", "red");
-
-                                      
-                                
 
     };
 
@@ -224,10 +241,74 @@ class DistributionChart {
                 return d3.ascending(a.val, b.val);
             });
 
+            tmp = this.rank(tmp);
+
             output.push(tmp);
         }
 
         return output;
+
+    };
+
+    /*
+     * Parses and processes raw data. Can generate val as per capita or absolute
+     *
+     * @param data data already filtered by this.filterData
+     * @param type string, either "percap" or "abs", indicates type of value to return
+     *
+     * @return info list where each row in data is represented as follows:
+     *         val: The metric for the given country, code, and direction. Can be absolute import/export, or per capita
+     *         code: Product code for row
+     *         direction: indicates whether import or export
+     *         type: indicates whether is absolute or per capita value
+     *         orig: the country of the data
+     */
+        
+    parse (data, type){
+
+        let info = [];
+
+        let getVal;
+
+        if (type == "percap")
+        {
+            getVal = function(d) {
+                if (d.population != "NA")
+                {
+                    return d.val / d.population;
+                }
+                return 0;
+            };
+        }
+        else
+        {
+            getVal = function(d) {
+                return d.val
+            };
+        }
+
+        data.forEach( function (row, i) {
+            info.push({
+                val: getVal(row),
+                code: row.code,
+                direction: row.type,
+                type: type,
+                orig: row.orig
+            });
+        });
+
+        return info;
+
+    };
+
+    rank (data){
+
+        for (let i = 0; i < data.length; i++)
+        {
+            data[i]['rank'] = i;
+        }
+
+        return data;
 
     };
 
@@ -281,58 +362,5 @@ class DistributionChart {
         }
 
         return outScales;
-    };
-
-    /*
-     * Parses and processes raw data. Can generate val as per capita or absolute
-     *
-     * @param data data already filtered by this.filterData
-     * @param type string, either "percap" or "abs", indicates type of value to return
-     *
-     * @return info list where each row in data is represented as follows:
-     *         rank: Rank of given country (compared to the world) for the given code and direction
-     *         val: The metric for the given country, code, and direction. Can be absolute import/export, or per capita
-     *         code: Product code for row
-     *         direction: indicates whether import or export
-     *         type: indicates whether is absolute or per capita value
-     *         orig: the country of the data
-     */
-        
-    parse (data, type){
-
-        let info = [];
-
-        let getVal;
-
-        if (type == "percap")
-        {
-            getVal = function(d) {
-                if (d.population != "NA")
-                {
-                    return d.countries.wld / d.population;
-                }
-                return 0;
-            };
-        }
-        else
-        {
-            getVal = function(d) {
-                return d.countries.wld;
-            };
-        }
-
-        data.forEach( function (row, i) {
-            info.push({
-                rank: i,
-                val: getVal(row),
-                code: row.code,
-                direction: row.type,
-                type: type,
-                orig: row.orig
-            });
-        });
-
-        return info;
-
     };
 }
