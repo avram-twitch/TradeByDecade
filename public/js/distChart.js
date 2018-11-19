@@ -45,6 +45,20 @@ class DistributionChart {
         this.createChart();
         this.createHeaders();
 
+        this.tip = d3.tip()
+                     .attr('id', "distChartTooltip")
+                     .attr('class', 'd3-tip')
+                     .direction('e');
+
+        d3.select("#distChartTooltip")
+          .classed("hidden", true);
+
+
+    };
+
+    tooltip_render(data) {
+        let text = "<h4>" + data + "</h4>";
+        return text;
     };
 
     createChart() {
@@ -127,8 +141,6 @@ class DistributionChart {
 
     updateCharts(data, args, country){
 
-        // TODO Handle cases where there is no data for selected country
-
         // TODO Tooltip that shows countries
         
         // TODO (Maybe) use kernel function to show distribution
@@ -183,11 +195,31 @@ class DistributionChart {
 
         groups = enterGroups.merge(groups);
 
+        this.tip.html((d) => {
+            console.log(d);
+            return this.tooltip_render(d);
+        });
+
+        groups.call(this.tip);
+        groups.on("mouseover", (d) => {
+                 d3.select("#distChartTooltip").classed("hidden", false);
+                 d3.event.stopPropagation();
+             })
+             .on("mousemove", (d) => {
+                 d3.event.stopPropagation();
+                 let XIndex = Math.floor(d3.event.pageX);
+                 console.log(XIndex);
+                 this.tip.show(XIndex);
+             })
+             .on("mouseout", (d) => { d3.select("#distChartTooltip").classed("hidden", true);});
+
+
         // Update Area Charts
         let paths = groups.select("path")
                           .datum((d) => {
                               return d;
                           });
+
 
         paths.attr('d', area)
              .style("fill", "blue");
