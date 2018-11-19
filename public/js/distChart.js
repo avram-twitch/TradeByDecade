@@ -198,19 +198,40 @@ class DistributionChart {
         let lines = groups.select("line");
                                
         lines.attr("x1", (d) => {
-            console.log(d[0]);
+            if (d.length == 0){    // No data for selected country
+                return 0;
+            }
             let rightShift = that.groupWidth * position;
             let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d[0].code] * (d[0].rank + 1);
             return rightShift + that.groupMargin.left + offset;
         })
         .attr("x2", (d) => {
+            if (d.length == 0){    // No data for selected country
+                return 0;
+            }
             let rightShift = that.groupWidth * position;
             let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d[0].code] * (d[0].rank + 1);
             return rightShift + that.groupMargin.left + offset;
         })
-        .attr("y1", (d) => that.allYScale(+d[0].code))
-        .attr("y2", (d) => that.allYScale(+d[0].code) + that.groupHeight - that.groupMargin.top - that.groupMargin.bottom)
-        .attr("stroke", "red");
+        .attr("y1", (d) => {
+            if (d.length == 0){    // No data for selected country
+                return 0;
+            }
+            return that.allYScale(+d[0].code) + that.groupMargin.top;
+        })
+        .attr("y2", (d) => {
+            if (d.length == 0){    // No data for selected country
+                return 0;
+            }
+            return that.allYScale(+d[0].code + 1)}
+            )
+        .attr("stroke", (d) => {
+            if (d.length == 0){    // No data for selected country
+                return "";
+            }
+
+            return "red";}
+            );
 
     };
 
