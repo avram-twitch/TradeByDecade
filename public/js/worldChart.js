@@ -117,8 +117,10 @@ class WorldChart {
         this.updateFunction = updateFunction;
     }
 
-    selectedCountry(filteredData, countryID) {
+    selected(countryID, year, productCode) {
         this.selectedCountryID = countryID;
+        this.selectedYear = year;
+        this.selectedProductCode = productCode;
         this.updateCharts();
     }
 

@@ -39,7 +39,7 @@ let updatePlot = function(countryValue, yearValue, codeValue) {
             });
             worldMap.loadedData(filtered);
             distChart.update(yearData, countryValue);
-            worldMap.selectedCountry(filtered, countryValue);
+            worldMap.selected(countryValue, yearValue, codeValue);
             trendChart.update(countryValue, codeValue, countryData);
         });
 
