@@ -17,6 +17,8 @@ class CountryData {
 class WorldChart {
 
     constructor (){
+        this.selectedProductCode = "all";
+
         let worldChart = d3.select("#worldHeatChart");
         this.margin = {top: 10, right: 20, bottom: 20, left: 50};
         this.legendHeight = 120;
@@ -127,7 +129,6 @@ class WorldChart {
     updateCharts() {
         this.countryPathElements.classed("countryOutline", false).attr("fill", "white");
         if( this.tradeData != null ) {
-
             if( this.selectedCountryID != 0 ) {
                 let totalExportsPerCountry = [];
                 let onlySelectedCountryData = this.tradeData.filter(datum => {
@@ -136,7 +137,15 @@ class WorldChart {
                 let onlyExportData = onlySelectedCountryData.filter(datum => {
                     return datum.type == "export";
                 });
-                for(let productType of onlyExportData) {
+                let filteredData = onlyExportData.filter(datum => {
+                    return datum.code == this.selectedProductCode;
+                });
+                if( this.selectedYear ) {
+                    filteredData = filteredData.filter(datum => {
+                        return datum.year == this.selectedYear;
+                    });
+                }
+                for(let productType of filteredData) {
                     for(let country of Object.keys(productType.countries)) {
                         if( totalExportsPerCountry[country] ) {
                             totalExportsPerCountry[country] += +productType.countries[country];
