@@ -17,6 +17,8 @@ class CountryData {
 class WorldChart {
 
     constructor (){
+        this.selectedProductCode = "all";
+
         let worldChart = d3.select("#worldHeatChart");
         this.margin = {top: 10, right: 20, bottom: 20, left: 50};
         this.legendHeight = 120;
@@ -109,6 +111,10 @@ class WorldChart {
         this.tradeData = tradeData;
     }
 
+    updatePopulationData(populationData) {
+        this.populationData = populationData;
+    }
+
     loadedWorld(countryData) {
         this.countryData = countryData;
     }
@@ -117,34 +123,59 @@ class WorldChart {
         this.updateFunction = updateFunction;
     }
 
-    selectedCountry(filteredData, countryID) {
+    selected(countryID, year, productCode) {
         this.selectedCountryID = countryID;
+        this.selectedYear = year;
+        this.selectedProductCode = productCode;
         this.updateCharts();
     }
 
     updateCharts() {
         this.countryPathElements.classed("countryOutline", false).attr("fill", "white");
         if( this.tradeData != null ) {
-
             if( this.selectedCountryID != 0 ) {
-                let totalExportsPerCountry = [];
                 let onlySelectedCountryData = this.tradeData.filter(datum => {
                     return datum.orig == this.selectedCountryID;
                 });
                 let onlyExportData = onlySelectedCountryData.filter(datum => {
                     return datum.type == "export";
                 });
-                for(let productType of onlyExportData) {
-                    for(let country of Object.keys(productType.countries)) {
+                let filteredData = onlyExportData.filter(datum => {
+                    return datum.code == this.selectedProductCode;
+                });
+                if( this.selectedYear ) {
+                    filteredData = filteredData.filter(datum => {
+                        return datum.year == this.selectedYear;
+                    });
+                }
+                let perCapita = this.perCapitaButton.classed("worldChartOptionSelected");
+                let totalExportsPerCountry = [];
+                for(let productType of filteredData) {
+                    let year = productType.year;
+                    for(let country of Object.keys(productType.countries).filter(country => country != "wld")) {
+                        let multiplier = 1;
+                        if( perCapita ) {
+                            if( this.populationData[country] && this.populationData[country][year]) {
+                                multiplier = 1.0/this.populationData[country][year];
+                            }
+                            else {
+                                multiplier = 0;
+                            }
+                        }
                         if( totalExportsPerCountry[country] ) {
-                            totalExportsPerCountry[country] += +productType.countries[country];
+                            totalExportsPerCountry[country] += +productType.countries[country] * multiplier;
                         }
                         else {
-                            totalExportsPerCountry[country] = +productType.countries[country];
+                            totalExportsPerCountry[country] = +productType.countries[country] * multiplier;
                         }
                     }
                 }
-                let max = Math.max(...Object.entries(totalExportsPerCountry).filter(d => d[0] != "wld").map(d => d[1]));
+                let max = Math.max(...Object.entries(totalExportsPerCountry).map(d => d[1]));
+                // for( let country of Object.keys(totalExportsPerCountry)) {
+                //     if( totalExportsPerCountry[country] > max/2 ) {
+                //         console.log(country + " = " + totalExportsPerCountry[country]);
+                //     }
+                // }
                 let colorScale = d3.scaleLinear().domain([0, max]).range(this.colorRange);
                 let axisScale = d3.scaleLinear().domain([max, 0]).range([0,this.legendHeight-1]).nice();
                 this.legendAxisGroup.call(d3.axisRight().scale(axisScale).tickFormat(d3.format("~s")));
