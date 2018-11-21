@@ -53,6 +53,8 @@ class DistributionChart {
         d3.select("#distChartTooltip")
           .classed("hidden", true);
 
+        this.selectedCountry = "";
+
 
     };
 
@@ -86,7 +88,14 @@ class DistributionChart {
         for (let i = 0; i < data.length; i++)
         {
             fontSize = Math.max(fontSizeMin, fontSizeMax - (Math.abs(data[i].rank - rank) * fontStep));
-            text = text + "<span style='font-size: " + fontSize + "pt;'>" + "#" + data[i].rank + ": " + data[i].name + "</span>" + "<br>";
+            if (this.selectedCountry == data[i].orig)
+            {
+                text = text + "<span style='font-size: " + fontSize + "pt;'>" + "***#" + data[i].rank + ": " + data[i].name + "</span>" + "<br>";
+            }
+            else
+            {
+                text = text + "<span style='font-size: " + fontSize + "pt;'>" + "#" + data[i].rank + ": " + data[i].name + "</span>" + "<br>";
+            }
         }
         return text;
     };
@@ -152,6 +161,7 @@ class DistributionChart {
     update (data, selectedCountry){
 
         this.data = data;
+        this.selectedCountry = selectedCountry;
 
         for (let i = 0; i < this.argsList.length; i++)
         {
@@ -220,6 +230,7 @@ class DistributionChart {
         
         let enterGroups = groups.enter()
                                 .append("g");
+        enterGroups.append("rect");
         enterGroups.append("path");
         enterGroups.append("line");
 
@@ -270,18 +281,33 @@ class DistributionChart {
              })
              .on("mousemove", (d) => {
                  d3.event.stopPropagation();
+                 let divMargin = 8;
                  let code = d[0].code;
-                 let rightShift = that.groupWidth * position;
-                 let XIndex = d3.event.pageX;
-                 let offset = XIndex - rightShift - that.groupMargin.left; 
-                 let pixelToRank = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / (offset * dataSizes[code]);
-                 offset = offset - pixelToRank;
+                 let rightShift = (that.groupWidth) * position;
+                 let XIndex = d3.event.pageX - divMargin;
+                 let offset = XIndex - rightShift;
                  let rank = ((offset * dataSizes[code]) / (that.groupWidth - that.groupMargin.right - that.groupMargin.left) ) - 1;
                  rank = Math.floor(rank);
                  this.tip.show(d, rank);
              })
              .on("mouseout", (d) => { d3.select("#distChartTooltip").classed("hidden", true);});
 
+        // Update Background Rectangles
+        
+        let rects = groups.select("rect")
+                          .datum((d) => {
+                              return d;
+                          });
+
+        rects.attr('x',(function(d,i) { 
+                         let rightShift = that.groupWidth * position;
+                         return rightShift + that.groupMargin.left;
+                     }))
+                     .attr('y', ((d) => that.allYScale(+d[0].code) + that.groupMargin.top))
+                     .attr('height', this.groupHeight - this.groupMargin.top - this.groupMargin.bottom)
+                     .attr('width', this.groupWidth - this.groupMargin.left - this.groupMargin.right)
+                     .classed('distChartBackground', true);
+                          
 
         // Update Area Charts
         let paths = groups.select("path")
@@ -291,7 +317,7 @@ class DistributionChart {
 
 
         paths.attr('d', area)
-             .style("fill", "blue");
+             .classed('distChartArea', true);
 
         // Update Selected Country Lines
         groups = container.selectAll("g")
@@ -326,13 +352,7 @@ class DistributionChart {
             }
             return that.allYScale(+d[0].code + 1)}
             )
-        .attr("stroke", (d) => {
-            if (d.length == 0){    // No data for selected country
-                return "";
-            }
-
-            return "red";}
-            );
+        .classed("distChartSelectedCountryLine", true);
 
         groups = container.selectAll("g")
                           .data(fData);
@@ -413,13 +433,15 @@ class DistributionChart {
         }
 
         data.forEach( function (row, i) {
-            info.push({
-                val: getVal(row),
-                code: row.code,
-                direction: row.type,
-                type: type,
-                orig: row.orig
-            });
+            if (row.orig != 'wld'){
+                info.push({
+                    val: getVal(row),
+                    code: row.code,
+                    direction: row.type,
+                    type: type,
+                    orig: row.orig
+                });
+            }
         });
 
         return info;
