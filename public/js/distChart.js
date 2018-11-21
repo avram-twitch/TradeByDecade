@@ -56,8 +56,38 @@ class DistributionChart {
 
     };
 
-    tooltip_render(data) {
-        let text = "<h4>" + data + "</h4>";
+    loadCountryNameData(countryNameData) {
+
+        this.countryNameData = {}
+
+        for (let i = 0; i < countryNameData.length; i++)
+        {
+            let key = countryNameData[i].id_3char;
+            let value = countryNameData[i].name;
+            this.countryNameData[key] = value;
+        }
+
+
+    };
+
+    getCountryName(id) {
+
+        return this.countryNameData[id];
+
+    };
+
+    tooltip_render(data, rank) {
+        let fontSizeMax = 15;
+        let fontSizeMin = 9;
+        let fontSize = 0;
+        let fontStep = (fontSizeMax - fontSizeMin) / ((data.length - 1) / 2);
+        let text = "";
+        let mid = ((data.length - 1) / 2);
+        for (let i = 0; i < data.length; i++)
+        {
+            fontSize = Math.max(fontSizeMin, fontSizeMax - (Math.abs(data[i].rank - rank) * fontStep));
+            text = text + "<span style='font-size: " + fontSize + "pt;'>" + "#" + data[i].rank + ": " + data[i].name + "</span>" + "<br>";
+        }
         return text;
     };
 
@@ -141,11 +171,11 @@ class DistributionChart {
 
     updateCharts(data, args, country){
 
-        // TODO Tooltip that shows countries
-        
         // TODO (Maybe) use kernel function to show distribution
         
         // TODO Enable click to impact rest of chart
+        
+        // TODO Ranks for tooltip are off (by about 12 ranks). Find out why and fix
         
         // Set variables, scales, and filter data
         
@@ -195,9 +225,42 @@ class DistributionChart {
 
         groups = enterGroups.merge(groups);
 
-        this.tip.html((d) => {
-            console.log(d);
-            return this.tooltip_render(d);
+        this.tip.html((d, rank) => {
+
+            let tipSize = 5;
+            let tipBeforeAfter = (tipSize - 1) / 2;
+            let tipBegin = 0;
+            let tipEnd = 0;
+
+            // Check if crosses lower bound
+            if (rank - tipBeforeAfter < 0)
+            {
+                tipBegin = 0;
+                tipEnd = tipSize;
+            }
+            else
+            {
+                tipBegin = rank - tipBeforeAfter;
+                // Check if crosses upper bound
+                if (rank + tipBeforeAfter >= d.length)
+                {
+                    tipBegin = d.length - 1 - tipSize;
+                    tipEnd = d.length - 1;
+                }
+                else
+                {
+                    tipEnd = rank + tipBeforeAfter;
+                }
+            }
+
+            let countriesToRender = [];
+            for (let i = tipBegin; i < tipEnd + 1; i++)
+            {
+                let currCountry = {'orig': d[i].orig, 'rank': d.length - d[i].rank, 'name': this.getCountryName(d[i].orig)};
+                countriesToRender.push(currCountry);
+            }
+
+            return this.tooltip_render(countriesToRender, d.length - rank);
         });
 
         groups.call(this.tip);
@@ -207,9 +270,15 @@ class DistributionChart {
              })
              .on("mousemove", (d) => {
                  d3.event.stopPropagation();
-                 let XIndex = Math.floor(d3.event.pageX);
-                 console.log(XIndex);
-                 this.tip.show(XIndex);
+                 let code = d[0].code;
+                 let rightShift = that.groupWidth * position;
+                 let XIndex = d3.event.pageX;
+                 let offset = XIndex - rightShift - that.groupMargin.left; 
+                 let pixelToRank = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / (offset * dataSizes[code]);
+                 offset = offset - pixelToRank;
+                 let rank = ((offset * dataSizes[code]) / (that.groupWidth - that.groupMargin.right - that.groupMargin.left) ) - 1;
+                 rank = Math.floor(rank);
+                 this.tip.show(d, rank);
              })
              .on("mouseout", (d) => { d3.select("#distChartTooltip").classed("hidden", true);});
 
@@ -264,6 +333,9 @@ class DistributionChart {
 
             return "red";}
             );
+
+        groups = container.selectAll("g")
+                          .data(fData);
 
     };
 

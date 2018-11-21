@@ -6,7 +6,9 @@ console.log("Loading country name data");
 let countryNameData = d3.csv('data/country_names.csv');
 countryNameData.then( countryNames => {
     console.log("Loaded country name data");
+    distChart.loadCountryNameData(countryNames);
 });
+
 
 console.log("Loading world json");
 d3.json('data/world.json').then( worldJson => {
