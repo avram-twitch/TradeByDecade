@@ -34,7 +34,7 @@ class DistributionChart {
 
         // Set Group Dimensions
 
-        this.groupPadding = 0.1;
+        this.groupPadding = 0.05;
         this.groupHeight = (this.svgHeight - this.margin.top - this.margin.bottom) / (this.allCodes.length + 1);
         this.groupWidth = (this.svgWidth - this.margin.left - this.margin.right) / 5;
         this.groupMargin = {top: this.groupHeight * this.groupPadding, 
@@ -181,10 +181,6 @@ class DistributionChart {
 
     updateCharts(data, args, country){
         
-        // TODO Tooltip hover over doesn't work when over line... Fix!
-        
-        // TODO Tooltip appears in wrong place if over the line. 
-        
         // TODO Implement Bar charts. Probably keep imports/exports, and allow user
         //      to switch between per capit and absolute
 
@@ -197,6 +193,12 @@ class DistributionChart {
         
         // Set variables, scales, and filter data
         
+        this.updateDistCharts(data, args, country);
+
+    };
+
+    updateDistCharts(data, args, country) {
+
         let that = this;
 
         let direction = args.direction;
@@ -205,27 +207,27 @@ class DistributionChart {
 
         let fData = this.filterData(data, direction, type);
         let selectedCountryData = this.getSelectedCountryData(fData, country);
-        let scales = this.generateScales(fData);
+        this.scales = this.generateScales(fData);
 
         // Determine size of data subset for each code
 
-        let dataSizes = {};
+        this.dataSizes = {};
 
         for (let i = 0; i < fData.length; i++)
         {
-            dataSizes[fData[i][0].code] = fData[i].length;
+            this.dataSizes[fData[i][0].code] = fData[i].length;
         }
 
         let area = d3.area()
                      .x(function(d,i) { 
                          let rightShift = that.groupWidth * position;
-                         let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d.code] * (i + 1); 
+                         let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / that.dataSizes[d.code] * (i + 1); 
                          return rightShift + that.groupMargin.left + offset;
                      })
                      .y0((d) => that.allYScale(+d.code + 1))
                      .y1(function(d,i) { 
                          let base = that.allYScale(+d.code + 1);
-                         let height = scales[d.code](d.val);
+                         let height = that.scales[d.code](d.val);
                          return base - height; });
 
         let container = this.svg.select('#' + direction + type);
@@ -298,7 +300,7 @@ class DistributionChart {
                  let rightShift = (that.groupWidth) * position;
                  let XIndex = d3.event.pageX - divMargin;
                  let offset = XIndex - rightShift - that.groupMargin.left;
-                 let rank = ((offset * dataSizes[code]) / (that.groupWidth - that.groupMargin.right - that.groupMargin.left) );
+                 let rank = ((offset * that.dataSizes[code]) / (that.groupWidth - that.groupMargin.right - that.groupMargin.left) );
                  rank = Math.floor(rank);
                  this.tip.show(d, rank);
              })
@@ -356,7 +358,7 @@ class DistributionChart {
                 return 0;
             }
             let rightShift = that.groupWidth * position;
-            let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d[0].code] * (d[0].rank + 1);
+            let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / that.dataSizes[d[0].code] * (d[0].rank + 1);
             return rightShift + that.groupMargin.left + offset;
         })
         .attr("x2", (d) => {
@@ -364,7 +366,7 @@ class DistributionChart {
                 return 0;
             }
             let rightShift = that.groupWidth * position;
-            let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / dataSizes[d[0].code] * (d[0].rank + 1);
+            let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / that.dataSizes[d[0].code] * (d[0].rank + 1);
             return rightShift + that.groupMargin.left + offset;
         })
         .attr("y1", (d) => {

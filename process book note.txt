@@ -10,4 +10,5 @@ Use a nonlinear distribution that will reduce the impact of the outliers on the 
 # Avram
 
 Had issues aligning tooltip coordinates/list for dist chart
+Had to use an "overlay" for dist chart so that the tooltip would always appear in the correct place
 Realized late in process that we probably should show absolute values somewhere in chart, so that users can compare different product values.
