@@ -58,7 +58,7 @@
 
 .distChartBackground {
     fill: #cccccc;
-    opacity: .5;
+    opacity: .25;
 }
 
 .distChartRectOverlay {
@@ -67,11 +67,23 @@
 }
 
 .distChartArea {
+    opacity: .8;
+}
+
+.distChartExports {
     fill: #c6162b;
+}
+
+.distChartImports {
+    fill: blue;
+}
+
+.distChartBar {
     opacity: .8;
 }
 
 .distChartSelectedCountryLine {
     stroke: black;
+    stroke-width: 2;
     opacity: .8;
 }

@@ -22,7 +22,7 @@ class DistributionChart {
                                "8":"Misc Manufactured",
                                "9":"Other"}
 
-        this.headers = ["Product Type", "Exports", "Exports per Capita", "Imports", "Imports per Capita"];
+        this.headers = ["Product Type", "Export Ranks", "Exports", "Import Ranks", "Imports"];
 
         // Set SVG dimensions
         
@@ -112,16 +112,17 @@ class DistributionChart {
                            .domain([0, this.allCodes.length + 1])
                            .range([this.margin.bottom, this.svgHeight - this.margin.bottom - this.margin.top])
 
-        this.argsList = [{'direction': 'export', 'type': 'abs', 'position': 1},
-                         {'direction': 'export', 'type': 'percap', 'position': 2},
-                         {'direction': 'import', 'type': 'abs', 'position': 3},
-                         {'direction': 'import', 'type': 'percap', 'position': 4}];
+        this.argsList = [{'direction': 'export', 'type': 'abs', 'position': 1, 'chart': 'dist'},
+                         {'direction': 'export', 'type': 'abs', 'position': 2, 'chart': 'bar'},
+                         {'direction': 'import', 'type': 'abs', 'position': 3, 'chart': 'dist'},
+                         {'direction': 'import', 'type': 'abs', 'position': 4, 'chart': 'bar'}];
 
         for (let i = 0; i < this.argsList.length; i++)
         {
             let direction = this.argsList[i].direction;
             let type = this.argsList[i].type;
-            this.svg.append("g").attr("id", direction + type);
+            let chart = this.argsList[i].chart;
+            this.svg.append("g").attr("id", chart + direction + type);
         }
 
     };
@@ -159,13 +160,29 @@ class DistributionChart {
      * @param country 3 character id of selected country
      */
     update (data, selectedCountry){
+        
+        // TODO Implement Bar charts. Probably keep imports/exports, and allow user
+        //      to switch between per capit and absolute
+
+        // TODO Implement Sorting
+        
+        // TODO Enable click to impact rest of chart (clicking on product changes
+        //      product for rest of chart).
+        
+        // TODO (Maybe) use kernel function to show distribution
 
         this.data = data;
         this.selectedCountry = selectedCountry;
 
         for (let i = 0; i < this.argsList.length; i++)
         {
-            this.updateCharts(data, this.argsList[i], selectedCountry);
+            if (this.argsList[i].chart == 'dist'){
+                this.updateDistCharts(data, this.argsList[i], selectedCountry);
+            }
+
+            if (this.argsList[i].chart == 'bar'){
+                this.updateBarCharts(data, this.argsList[i], selectedCountry);
+            }
         }
 
     };
@@ -179,22 +196,80 @@ class DistributionChart {
      * @param country the 3 char id of selected country
      */
 
-    updateCharts(data, args, country){
-        
-        // TODO Implement Bar charts. Probably keep imports/exports, and allow user
-        //      to switch between per capit and absolute
+    updateBarCharts(data, args, country){
 
-        // TODO Implement Sorting
-        
-        // TODO Enable click to impact rest of chart (clicking on product changes
-        //      product for rest of chart).
-        
-        // TODO (Maybe) use kernel function to show distribution
-        
-        // Set variables, scales, and filter data
-        
-        this.updateDistCharts(data, args, country);
+        let that = this;
 
+        let direction = args.direction;
+        let type = args.type;
+        let position = +args.position;
+        let chart = args.chart;
+
+        let fData = this.filterData(data, direction, type);
+        let selectedCountryData = this.getSelectedCountryData(fData, country);
+
+        let max = 0;
+
+        for (let i = 0; i < selectedCountryData.length; i++)
+        {
+            let val = selectedCountryData[i][0].val;
+            if (val > max)
+            {
+                max = val;
+            }
+        }
+
+        // Note: I deliberately subtract right margin twice for range to provide some padding
+        let barChartScale = d3.scaleLinear()
+                              .domain([0,max])
+                              .range([this.groupMargin.left, this.groupWidth - this.groupMargin.left - this.groupMargin.right - this.groupMargin.right]); 
+
+        let container = this.svg.select('#' + chart + direction + type);
+
+        let groups = container.selectAll("g")
+                              .data(selectedCountryData);
+        groups.exit().remove();
+
+        let enterGroups = groups.enter()
+                                .append('g');
+
+        enterGroups.append('rect').classed("distChartBar", true);
+        enterGroups.append("rect").classed('distChartBackground', true);
+
+        groups = enterGroups.merge(groups);
+        console.log(selectedCountryData);
+
+        let rects = groups.select('.distChartBar')
+                          .datum((d) => {
+                              return d;
+                          });
+
+        rects.attr('x',(function(d,i) { 
+                         let rightShift = that.groupWidth * position;
+                         return rightShift + that.groupMargin.left;
+                     }))
+                     .attr('y', ((d) => that.allYScale(+d[0].code) + that.groupMargin.top + that.groupHeight * .25))
+                     .attr('height', (that.groupHeight - that.groupMargin.top - that.groupMargin.bottom) / 2)
+                     .attr('width', (d) => barChartScale(d[0].val))
+                     .classed('distChartExports', (d) => d[0].direction == 'export')
+                     .classed('distChartImports', (d) => d[0].direction == 'import');
+
+
+        rects = groups.select(".distChartBackground")
+                          .datum((d) => {
+                              return d;
+                          });
+
+        rects.attr('x',(function(d,i) { 
+                         let rightShift = that.groupWidth * position;
+                         return rightShift + that.groupMargin.left;
+                     }))
+                     .attr('y', ((d) => that.allYScale(+d[0].code) + that.groupMargin.top))
+                     .attr('height', this.groupHeight - this.groupMargin.top - this.groupMargin.bottom)
+                     .attr('width', this.groupWidth - this.groupMargin.left - this.groupMargin.right)
+                     .classed('distChartBackground', true);
+
+        
     };
 
     updateDistCharts(data, args, country) {
@@ -204,6 +279,7 @@ class DistributionChart {
         let direction = args.direction;
         let type = args.type;
         let position = +args.position;
+        let chart = args.chart;
 
         let fData = this.filterData(data, direction, type);
         let selectedCountryData = this.getSelectedCountryData(fData, country);
@@ -230,7 +306,7 @@ class DistributionChart {
                          let height = that.scales[d.code](d.val);
                          return base - height; });
 
-        let container = this.svg.select('#' + direction + type);
+        let container = this.svg.select('#' + chart + direction + type);
 
         let groups = container.selectAll("g")
                               .data(fData);
@@ -346,7 +422,9 @@ class DistributionChart {
 
 
         paths.attr('d', area)
-             .classed('distChartArea', true);
+             .classed('distChartArea', true)
+             .classed('distChartExports', (d) => d[0].direction == 'export')
+             .classed('distChartImports', (d) => d[0].direction == 'import');
 
         // Update Selected Country Lines
         groups = container.selectAll("g")
