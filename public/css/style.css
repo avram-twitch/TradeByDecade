@@ -61,6 +61,11 @@
     opacity: .5;
 }
 
+.distChartRectOverlay {
+    fill: #ffffff;
+    opacity: 0.0;
+}
+
 .distChartArea {
     fill: #c6162b;
     opacity: .8;

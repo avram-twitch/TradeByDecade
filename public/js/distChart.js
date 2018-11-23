@@ -180,12 +180,20 @@ class DistributionChart {
      */
 
     updateCharts(data, args, country){
+        
+        // TODO Tooltip hover over doesn't work when over line... Fix!
+        
+        // TODO Tooltip appears in wrong place if over the line. 
+        
+        // TODO Implement Bar charts. Probably keep imports/exports, and allow user
+        //      to switch between per capit and absolute
 
+        // TODO Implement Sorting
+        
+        // TODO Enable click to impact rest of chart (clicking on product changes
+        //      product for rest of chart).
+        
         // TODO (Maybe) use kernel function to show distribution
-        
-        // TODO Enable click to impact rest of chart
-        
-        // TODO Ranks for tooltip are off (by about 12 ranks). Find out why and fix
         
         // Set variables, scales, and filter data
         
@@ -226,16 +234,20 @@ class DistributionChart {
                               .data(fData);
 
         groups.exit().remove();
+        
         // Create new groups, paths, and lines
         
         let enterGroups = groups.enter()
                                 .append("g");
-        enterGroups.append("rect");
+        enterGroups.append("rect").classed('distChartBackground', true);
         enterGroups.append("path");
         enterGroups.append("line");
+        enterGroups.append("rect").classed('distChartRectOverlay', true);
 
         groups = enterGroups.merge(groups);
 
+        // Set up tooltip
+        
         this.tip.html((d, rank) => {
 
             let tipSize = 5;
@@ -285,8 +297,8 @@ class DistributionChart {
                  let code = d[0].code;
                  let rightShift = (that.groupWidth) * position;
                  let XIndex = d3.event.pageX - divMargin;
-                 let offset = XIndex - rightShift;
-                 let rank = ((offset * dataSizes[code]) / (that.groupWidth - that.groupMargin.right - that.groupMargin.left) ) - 1;
+                 let offset = XIndex - rightShift - that.groupMargin.left;
+                 let rank = ((offset * dataSizes[code]) / (that.groupWidth - that.groupMargin.right - that.groupMargin.left) );
                  rank = Math.floor(rank);
                  this.tip.show(d, rank);
              })
@@ -294,7 +306,7 @@ class DistributionChart {
 
         // Update Background Rectangles
         
-        let rects = groups.select("rect")
+        let rects = groups.select(".distChartBackground") //.select("rect")
                           .datum((d) => {
                               return d;
                           });
@@ -307,6 +319,21 @@ class DistributionChart {
                      .attr('height', this.groupHeight - this.groupMargin.top - this.groupMargin.bottom)
                      .attr('width', this.groupWidth - this.groupMargin.left - this.groupMargin.right)
                      .classed('distChartBackground', true);
+
+        // Update Overlay Rectangles
+        let overlays = groups.select(".distChartRectOverlay")
+                             .datum((d) => {
+                                 return d;
+                             });
+
+        overlays.attr('x',(function(d,i) { 
+                         let rightShift = that.groupWidth * position;
+                         return rightShift + that.groupMargin.left;
+                     }))
+                     .attr('y', ((d) => that.allYScale(+d[0].code) + that.groupMargin.top))
+                     .attr('height', this.groupHeight - this.groupMargin.top - this.groupMargin.bottom)
+                     .attr('width', this.groupWidth - this.groupMargin.left - this.groupMargin.right)
+                     .classed('distChartRectOverlay', true);
                           
 
         // Update Area Charts
@@ -354,6 +381,7 @@ class DistributionChart {
             )
         .classed("distChartSelectedCountryLine", true);
 
+        // This is to ensure correct data is bound to tooltip
         groups = container.selectAll("g")
                           .data(fData);
 
