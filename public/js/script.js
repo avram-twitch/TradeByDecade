@@ -61,7 +61,7 @@ let updatePlot = function(countryValue, yearValue, codeValue) {
                 return d.year == yearValue;
             });
             worldMap.loadedData(filtered);
-            distChart.update(yearData, countryValue);
+            distChart.update(yearData, filtered, countryValue);
             worldMap.selected(countryValue, yearValue, codeValue);
             trendChart.update(countryValue, codeValue, countryData);
         });

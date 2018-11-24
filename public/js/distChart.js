@@ -45,12 +45,20 @@ class DistributionChart {
         this.createChart();
         this.createHeaders();
 
-        this.tip = d3.tip()
+        this.distTip = d3.tip()
                      .attr('id', "distChartTooltip")
                      .attr('class', 'd3-tip')
                      .direction('e');
 
+        this.barTip = d3.tip()
+                        .attr('id', 'barChartTooltip')
+                        .attr('class', 'd3-tip')
+                        .direction('e');
+
         d3.select("#distChartTooltip")
+          .classed("hidden", true);
+
+        d3.select("#barChartTooltip")
           .classed("hidden", true);
 
         this.selectedCountry = "";
@@ -69,7 +77,6 @@ class DistributionChart {
             this.countryNameData[key] = value;
         }
 
-
     };
 
     getCountryName(id) {
@@ -78,7 +85,33 @@ class DistributionChart {
 
     };
 
-    tooltip_render(data, rank) {
+    formatNumber(number) {
+        let thousands = 1000;
+        let millions = 1000000;
+        let billions = 1000000000;
+        let trillions = 1000000000000;
+
+        if (number > trillions) {
+            return (number / trillions).toFixed(1) + "T";
+        }
+
+        if (number > billions) {
+            return (number / billions).toFixed(1) + "B";
+        }
+
+        if (number > millions) {
+            return (number / millions).toFixed(1) + "M";
+        }
+
+        if (number > thousands) {
+            return (number / thousands).toFixed(1) + "K";
+        }
+
+        return number;
+
+    };
+
+    dist_tooltip_render(data, rank) {
         let fontSizeMax = 15;
         let fontSizeMin = 9;
         let fontSize = 0;
@@ -90,13 +123,53 @@ class DistributionChart {
             fontSize = Math.max(fontSizeMin, fontSizeMax - (Math.abs(data[i].rank - rank) * fontStep));
             if (this.selectedCountry == data[i].orig)
             {
-                text = text + "<span style='font-size: " + fontSize + "pt;'>" + "***#" + data[i].rank + ": " + data[i].name + "</span>" + "<br>";
+                text = text + "<span style='font-size: " + fontSize + "pt;'>" + "***#" + data[i].rank + ": " + data[i].name + "($" + this.formatNumber(data[i].val) + ")</span>" + "<br>";
             }
             else
             {
-                text = text + "<span style='font-size: " + fontSize + "pt;'>" + "#" + data[i].rank + ": " + data[i].name + "</span>" + "<br>";
+                text = text + "<span style='font-size: " + fontSize + "pt;'>" + "#" + data[i].rank + ": " + data[i].name + "($" + this.formatNumber(data[i].val) + ")</span>" + "<br>";
             }
         }
+        return text;
+    };
+
+    bar_tooltip_render(data, direction) {
+
+        let topN = 5;
+        let headerSize = 15;
+
+        let dataList = [];
+
+        Object.keys(data.countries).forEach(function(key, index) {
+            if (key != 'wld')
+            {
+                dataList.push({'key': key, 'val': +data.countries[key]});
+            }
+        });
+
+        dataList.sort(function(a,b) {
+                return d3.descending(a.val, b.val);
+            });
+
+        let text = "";
+
+        if (direction == 'export')
+        {
+            text = text + "<span style='font-size: " + headerSize + "pt;'><b>Top Exporting Destinations</b></span><br>";
+        }
+
+        if (direction == 'import')
+        {
+            text = text + "<span style='font-size: " + headerSize + "pt;'><b>Top Importing Origins</b></span><br>";
+        }
+
+        for (let i = 0; i < topN; i++)
+        {
+            let name = this.getCountryName(dataList[i].key);
+            let value = dataList[i].val;
+            text = text + "<span>" + "#" + (i + 1) + ": " + name + "($" + this.formatNumber(value) + ")" + "</span>" + "<br>";
+        }
+
         return text;
     };
 
@@ -159,7 +232,7 @@ class DistributionChart {
      * @param data import/export data filtered to a single year
      * @param country 3 character id of selected country
      */
-    update (data, selectedCountry){
+    update (data, filteredData, selectedCountry){
         
         // TODO Implement Bar charts. Probably keep imports/exports, and allow user
         //      to switch between per capit and absolute
@@ -181,7 +254,7 @@ class DistributionChart {
             }
 
             if (this.argsList[i].chart == 'bar'){
-                this.updateBarCharts(data, this.argsList[i], selectedCountry);
+                this.updateBarCharts(filteredData, this.argsList[i], selectedCountry);
             }
         }
 
@@ -205,14 +278,13 @@ class DistributionChart {
         let position = +args.position;
         let chart = args.chart;
 
-        let fData = this.filterData(data, direction, type);
-        let selectedCountryData = this.getSelectedCountryData(fData, country);
+        let fData = data.filter((d) => d.type == direction && d.code != 'all');
 
         let max = 0;
 
-        for (let i = 0; i < selectedCountryData.length; i++)
+        for (let i = 0; i < fData.length; i++)
         {
-            let val = selectedCountryData[i][0].val;
+            let val = fData[i].countries.wld;
             if (val > max)
             {
                 max = val;
@@ -227,7 +299,7 @@ class DistributionChart {
         let container = this.svg.select('#' + chart + direction + type);
 
         let groups = container.selectAll("g")
-                              .data(selectedCountryData);
+                              .data(fData);
         groups.exit().remove();
 
         let enterGroups = groups.enter()
@@ -237,7 +309,6 @@ class DistributionChart {
         enterGroups.append("rect").classed('distChartBackground', true);
 
         groups = enterGroups.merge(groups);
-        console.log(selectedCountryData);
 
         let rects = groups.select('.distChartBar')
                           .datum((d) => {
@@ -248,11 +319,11 @@ class DistributionChart {
                          let rightShift = that.groupWidth * position;
                          return rightShift + that.groupMargin.left;
                      }))
-                     .attr('y', ((d) => that.allYScale(+d[0].code) + that.groupMargin.top + that.groupHeight * .25))
+                     .attr('y', ((d) => that.allYScale(+d.code) + that.groupMargin.top + that.groupHeight * .25))
                      .attr('height', (that.groupHeight - that.groupMargin.top - that.groupMargin.bottom) / 2)
-                     .attr('width', (d) => barChartScale(d[0].val))
-                     .classed('distChartExports', (d) => d[0].direction == 'export')
-                     .classed('distChartImports', (d) => d[0].direction == 'import');
+                     .attr('width', (d) => barChartScale(d.countries.wld))
+                     .classed('distChartExports', (d) => d.type == 'export')
+                     .classed('distChartImports', (d) => d.type == 'import');
 
 
         rects = groups.select(".distChartBackground")
@@ -264,10 +335,25 @@ class DistributionChart {
                          let rightShift = that.groupWidth * position;
                          return rightShift + that.groupMargin.left;
                      }))
-                     .attr('y', ((d) => that.allYScale(+d[0].code) + that.groupMargin.top))
+                     .attr('y', ((d) => that.allYScale(+d.code) + that.groupMargin.top))
                      .attr('height', this.groupHeight - this.groupMargin.top - this.groupMargin.bottom)
                      .attr('width', this.groupWidth - this.groupMargin.left - this.groupMargin.right)
                      .classed('distChartBackground', true);
+
+        this.barTip.html((d) => {
+            return that.bar_tooltip_render(d, d.type);
+        });
+
+        groups.call(this.barTip);
+        groups.on("mouseover", (d) => {
+                 d3.select("#barChartTooltip").classed("hidden", false);
+                 d3.event.stopPropagation();
+             })
+             .on("mousemove", (d) => {
+                 this.barTip.show(d);
+                 d3.event.stopPropagation();
+             })
+             .on("mouseout", (d) => { d3.select("#barChartTooltip").classed("hidden", true);});
 
         
     };
@@ -326,7 +412,7 @@ class DistributionChart {
 
         // Set up tooltip
         
-        this.tip.html((d, rank) => {
+        this.distTip.html((d, rank) => {
 
             let tipSize = 5;
             let tipBeforeAfter = (tipSize - 1) / 2;
@@ -357,14 +443,14 @@ class DistributionChart {
             let countriesToRender = [];
             for (let i = tipBegin; i < tipEnd + 1; i++)
             {
-                let currCountry = {'orig': d[i].orig, 'rank': d.length - d[i].rank, 'name': this.getCountryName(d[i].orig)};
+                let currCountry = {'orig': d[i].orig, 'rank': d.length - d[i].rank, 'name': this.getCountryName(d[i].orig), 'val': d[i].val};
                 countriesToRender.push(currCountry);
             }
 
-            return this.tooltip_render(countriesToRender, d.length - rank);
+            return this.dist_tooltip_render(countriesToRender, d.length - rank);
         });
 
-        groups.call(this.tip);
+        groups.call(this.distTip);
         groups.on("mouseover", (d) => {
                  d3.select("#distChartTooltip").classed("hidden", false);
                  d3.event.stopPropagation();
@@ -378,7 +464,7 @@ class DistributionChart {
                  let offset = XIndex - rightShift - that.groupMargin.left;
                  let rank = ((offset * that.dataSizes[code]) / (that.groupWidth - that.groupMargin.right - that.groupMargin.left) );
                  rank = Math.floor(rank);
-                 this.tip.show(d, rank);
+                 this.distTip.show(d, rank);
              })
              .on("mouseout", (d) => { d3.select("#distChartTooltip").classed("hidden", true);});
 
@@ -617,5 +703,29 @@ class DistributionChart {
         }
 
         return outScales;
+    };
+
+    filterBarChartData(data, direction, country) {
+        let that = this;
+
+        let output = [];
+
+        for (let i = 0; i < this.allCodes.length; i++)
+        {
+            let tmp = data.filter(function(d) {
+                return d.type == direction && d.code == that.allCodes[i] && d.orig == country;
+            });
+
+            tmp.sort(function(a, b) {
+                return d3.ascending(a.val, b.val);
+            });
+
+            tmp = this.rank(tmp);
+
+            output.push(tmp);
+        }
+
+        return output;
+
     };
 }
