@@ -62,6 +62,10 @@ class DistributionChart {
                             bottom:this.groupHeight * this.groupPadding, 
                             left:this.groupWidth * this.groupPadding};
 
+        this.selectedCountry = "";
+        this.selectedCode = "all";
+        this.year = "";
+
         this.createChart();
         this.createHeaders();
 
@@ -81,7 +85,6 @@ class DistributionChart {
         d3.select("#barChartTooltip")
           .classed("hidden", true);
 
-        this.selectedCountry = "";
 
     };
 
@@ -265,9 +268,31 @@ class DistributionChart {
 
         // Create base SVG elements
         
+        let that = this;
+
         this.svg = this.distChart.append("svg")
                                  .attr("width", this.svgWidth)
-                                 .attr("height", this.svgHeight);
+                                 .attr("height", this.svgHeight)
+                                 .on('click', function() {
+                                     
+                                        d3.event.stopPropagation();
+                                        that.codeSortingOrder =  {'1':1,
+                                                                  '2':2, 
+                                                                  '3':3, 
+                                                                  '4':4, 
+                                                                  '5':5, 
+                                                                  '6':6, 
+                                                                  '7':7, 
+                                                                  '8':8, 
+                                                                  '9':9 };
+
+                                        that.sortingTracker = {'export-dist': 0,
+                                                               'export-bar': 0,
+                                                               'import-dist': 0,
+                                                               'import-bar': 0};
+
+                                        that.updatePlot(that.selectedCountry, that.year, 'all');
+                                 });
 
         // Set up Y Scale
         
@@ -315,6 +340,9 @@ class DistributionChart {
 
         rowLabelsGroups.select('text')
                        .text((d) => this.codeSemantics[d])
+                       .classed('distChartHighlightedProduct', (d) => {
+                           return +d == that.selectedCode;
+                       })
                        .attr('x', this.groupMargin.left)
                        .attr('y', (d) => this.allYScale(that.codeSortingOrder[+d] + .5))
                        .classed('distChartRowLabels', true);
@@ -325,7 +353,9 @@ class DistributionChart {
                        .attr('width', this.groupWidth)
                        .attr('height', this.groupHeight)
                        .on('click', (d) => {
+                           d3.event.stopPropagation();
                            that.updatePlot(that.selectedCountry, that.year, d);
+                           //that.createHeaders();
                        });
 
         let headersGroups = this.svg.select('#distHeaders');
@@ -350,6 +380,7 @@ class DistributionChart {
                      .attr('width', this.groupWidth)
                      .attr('height', this.groupHeight)
                      .on('click', (d) => {
+                         d3.event.stopPropagation();
                          let direction = d.direction;
                          let chart = d.chart;
                          that.sortCodes(direction, chart);});
@@ -375,6 +406,7 @@ class DistributionChart {
         this.data = data;
         this.filteredData = filteredData;
         this.selectedCountry = selectedCountry;
+        this.createHeaders();
 
         for (let i = 0; i < this.argsList.length; i++)
         {

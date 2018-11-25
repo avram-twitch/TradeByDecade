@@ -62,6 +62,7 @@ let updatePlot = function(countryValue, yearValue, codeValue) {
             });
             worldMap.loadedData(filtered);
             distChart.year = yearValue;
+            distChart.selectedCode = codeValue;
             distChart.update(yearData, filtered, countryValue);
             worldMap.selected(countryValue, yearValue, codeValue);
             trendChart.update(countryValue, codeValue, countryData);
@@ -78,5 +79,5 @@ countryNameData.then(countryNames => {
     createDropdownMenu(countryNames, updatePlot);
 });
 
-updatePlot("usa", "2000", "1");
+updatePlot("usa", "2000", "all");
 
