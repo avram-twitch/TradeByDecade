@@ -22,6 +22,16 @@ class DistributionChart {
                                "8":"Misc Manufactured",
                                "9":"Other"}
 
+        this.codeSortingOrder = [ {'1':1},
+                                  {'2':2}, 
+                                  {'3':3}, 
+                                  {'4':4}, 
+                                  {'5':5}, 
+                                  {'6':6}, 
+                                  {'7':7}, 
+                                  {'8':8}, 
+                                  {'9':9}] 
+
         this.headers = ["Product Type", "Export Ranks", "Exports", "Import Ranks", "Imports"];
 
         // Set SVG dimensions
@@ -63,26 +73,20 @@ class DistributionChart {
 
         this.selectedCountry = "";
 
-
     };
 
     loadCountryNameData(countryNameData) {
-
         this.countryNameData = {}
-
         for (let i = 0; i < countryNameData.length; i++)
         {
             let key = countryNameData[i].id_3char;
             let value = countryNameData[i].name;
             this.countryNameData[key] = value;
         }
-
     };
 
     getCountryName(id) {
-
         return this.countryNameData[id];
-
     };
 
     formatNumber(number) {
@@ -108,7 +112,6 @@ class DistributionChart {
         }
 
         return number;
-
     };
 
     dist_tooltip_render(data, rank) {
@@ -181,47 +184,74 @@ class DistributionChart {
                                  .attr("width", this.svgWidth)
                                  .attr("height", this.svgHeight);
 
+        // Set up Y Scale
+        
         this.allYScale = d3.scaleLinear()
                            .domain([0, this.allCodes.length + 1])
-                           .range([this.margin.bottom, this.svgHeight - this.margin.bottom - this.margin.top])
+                           .range([this.margin.bottom, this.svgHeight - this.margin.bottom - this.margin.top]);
 
+        // Generate Groups
+        
         this.argsList = [{'direction': 'export', 'type': 'abs', 'position': 1, 'chart': 'dist'},
                          {'direction': 'export', 'type': 'abs', 'position': 2, 'chart': 'bar'},
                          {'direction': 'import', 'type': 'abs', 'position': 3, 'chart': 'dist'},
                          {'direction': 'import', 'type': 'abs', 'position': 4, 'chart': 'bar'}];
+
+        this.svg.append('g').attr('id', 'distHeaders');
+        this.svg.append('g').attr('id', 'distRowLabels');
 
         for (let i = 0; i < this.argsList.length; i++)
         {
             let direction = this.argsList[i].direction;
             let type = this.argsList[i].type;
             let chart = this.argsList[i].chart;
-            this.svg.append("g").attr("id", chart + direction + type);
+            this.svg.append("g").attr("id", chart + "_" + direction);
         }
 
     };
 
     /**
-     * Creates the Headers and left column labesl of distribution chart
+     * Creates the Headers and left column labels of distribution chart
      */
     createHeaders(){
 
-        for (let i = 0; i < this.allCodes.length; i++)
-        {
-            let tmp = this.svg.append("text");
-            tmp.text(this.codeSemantics[this.allCodes[i]]);
-            tmp.attr("x", this.groupMargin.left)
-               .attr("y", this.allYScale(+this.allCodes[i] + .5));
-            tmp.style("stroke", "black");
-        }
+        let rowLabelsGroup = this.svg.select('#distRowLabels');
+        rowLabelsGroup = rowLabelsGroup.selectAll('g')
+                                       .data(this.allCodes);
 
-        for (let i = 0; i < this.headers.length; i++)
-        {
-            let tmp = this.svg.append("text");
-            tmp.text(this.headers[i]);
-            tmp.attr("x", this.groupMargin.left + (i * this.groupWidth))
-               .attr("y", this.allYScale(0.5))
-               .style("stroke", "black");
-        }
+        let enterLabels = rowLabelsGroup.enter()
+                                        .append('g');
+
+        enterLabels.append('text')
+                   .text((d) => this.codeSemantics[d])
+                   .attr('x', this.groupMargin.left)
+                   .attr('y', (d) => this.allYScale(+d + .5))
+                   .classed('distChartRowLabels', true);
+        enterLabels.append('rect')
+                   .classed('distChartRectOverlay', true)
+                   .attr('x', this.groupMargin.left)
+                   .attr('y', (d) => this.allYScale(+d))
+                   .attr('width', this.groupWidth)
+                   .attr('height', this.groupHeight)
+                   .on('click', (d) => console.log(this.codeSemantics[d]));
+
+        let headersGroup = this.svg.select('#distHeaders');
+        headersGroup = headersGroup.selectAll('g')
+                                   .data(this.headers);
+        let enterHeaders = headersGroup.enter()
+                                       .append('g');
+        enterHeaders.append('text')
+                    .text((d) => d)
+                    .attr('x', (d, i) => this.groupMargin.left + (i * this.groupWidth))
+                    .attr('y', this.allYScale(0.5))
+                    .classed('distChartHeaders', true);
+        enterHeaders.append('rect')
+                    .classed('distChartRectOverlay', true)
+                    .attr('x', (d, i) => this.groupMargin.left + (i * this.groupWidth))
+                    .attr('y', this.groupMargin.top)
+                    .attr('width', this.groupWidth)
+                    .attr('height', this.groupHeight)
+                    .on('click', (d) => console.log(d));
 
     };
 
@@ -234,8 +264,7 @@ class DistributionChart {
      */
     update (data, filteredData, selectedCountry){
         
-        // TODO Implement Bar charts. Probably keep imports/exports, and allow user
-        //      to switch between per capit and absolute
+        // TODO Allow User to switch betwen per capit and absolute
 
         // TODO Implement Sorting
         
@@ -296,7 +325,7 @@ class DistributionChart {
                               .domain([0,max])
                               .range([this.groupMargin.left, this.groupWidth - this.groupMargin.left - this.groupMargin.right - this.groupMargin.right]); 
 
-        let container = this.svg.select('#' + chart + direction + type);
+        let container = this.svg.select('#' + chart + "_" + direction);
 
         let groups = container.selectAll("g")
                               .data(fData);
@@ -392,7 +421,7 @@ class DistributionChart {
                          let height = that.scales[d.code](d.val);
                          return base - height; });
 
-        let container = this.svg.select('#' + chart + direction + type);
+        let container = this.svg.select('#' + chart + "_" + direction);
 
         let groups = container.selectAll("g")
                               .data(fData);

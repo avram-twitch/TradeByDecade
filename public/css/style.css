@@ -82,6 +82,14 @@
     opacity: .8;
 }
 
+.distChartHeaders {
+    stroke: black;
+}
+
+.distChartRowLabels {
+    stroke: black;
+}
+
 .distChartSelectedCountryLine {
     stroke: black;
     stroke-width: 2;
