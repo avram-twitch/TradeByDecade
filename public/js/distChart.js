@@ -395,7 +395,7 @@ class DistributionChart {
      */
     update (data, filteredData, selectedCountry){
         
-        // TODO Make a "clear" click for product type
+        // TODO Add Text labels for dist chart and bar charts
         
         // TODO Maybe Transitions?
 
