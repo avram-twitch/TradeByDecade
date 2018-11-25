@@ -37,7 +37,12 @@ class DistributionChart {
                                'import-dist': 0,
                                'import-bar': 0};
 
-        this.headers = ["Product Type", "Export Ranks", "Exports", "Import Ranks", "Imports"];
+        this.headers = [{'name':"Product Type", 'direction': 'none', 'chart': 'none'}, 
+                        {'name':"Export Ranks", 'direction': 'export', 'chart': 'dist'}, 
+                        {'name':"Exports", 'direction': 'export', 'chart': 'bar'}, 
+                        {'name':"Import Ranks", 'direction': 'import', 'chart': 'dist'}, 
+                        {'name': "Imports", 'direction': 'import', 'chart': 'bar'}
+                       ];
 
         // Set SVG dimensions
         
@@ -83,7 +88,19 @@ class DistributionChart {
     sortCodes(direction, chart) {
 
         let that = this;
-        let fData = this.filteredData;
+        let fData;
+        let selectedCountryData;
+        if (chart == 'bar')
+        {
+            fData = this.filteredData;
+        }
+        
+        if (chart == 'dist')
+        {
+            fData = this.filterData(this.data, direction, 'abs');
+            selectedCountryData = this.getSelectedCountryData(fData, this.selectedCountry);
+        }
+
         let trackerKey = direction + '-' + chart;
         let sortDirection = this.sortingTracker[trackerKey];
         
@@ -102,15 +119,35 @@ class DistributionChart {
 
         this.sortingTracker[trackerKey] = sortDirection;
 
-        fData = fData.filter((d) => d.type == direction && d.code != 'all');
-        fData.sort(function(a,b){
-            return d3.ascending(+a.countries.wld * sortDirection, +b.countries.wld * sortDirection);
-        });
 
-        for (let i = 0; i < fData.length; i++)
+        if (chart == 'bar')
         {
-            let code = fData[i].code;
-            this.codeSortingOrder[code] = i + 1;
+            fData = fData.filter((d) => d.type == direction && d.code != 'all');
+            fData.sort(function(a,b){
+                return d3.ascending(+a.countries.wld * sortDirection, +b.countries.wld * sortDirection);
+            });
+
+            for (let i = 0; i < fData.length; i++)
+            {
+                let code = fData[i].code;
+                this.codeSortingOrder[code] = i + 1;
+            }
+        }
+
+        if (chart == 'dist')
+        {
+            selectedCountryData = selectedCountryData.filter((d) => d[0].direction == direction);
+            selectedCountryData.sort(function(a,b){
+                let aSize = that.dataSizes[a[0].code];
+                let bSize = that.dataSizes[b[0].code];
+                return d3.ascending((aSize - (+a[0].rank)) * sortDirection, (bSize - (+b[0].rank)) * sortDirection);
+            });
+
+            for (let i = 0; i < selectedCountryData.length; i++)
+            {
+                let code = selectedCountryData[i][0].code;
+                this.codeSortingOrder[code] = i + 1;
+            }
         }
 
         this.createHeaders();
@@ -295,7 +332,7 @@ class DistributionChart {
         headersGroups = enterHeaders.merge(headersGroups);
 
         headersGroups.select('text')
-                     .text((d) => d)
+                     .text((d) => d.name)
                      .attr('x', (d, i) => this.groupMargin.left + (i * this.groupWidth))
                      .attr('y', this.allYScale(0.5))
                      .classed('distChartHeaders', true);
@@ -306,10 +343,9 @@ class DistributionChart {
                      .attr('width', this.groupWidth)
                      .attr('height', this.groupHeight)
                      .on('click', (d) => {
-                         console.log(d);
-                         let type = 'export';
-                         let chart = 'bar';
-                         that.sortCodes(type, chart);});
+                         let direction = d.direction;
+                         let chart = d.chart;
+                         that.sortCodes(direction, chart);});
 
     };
 
