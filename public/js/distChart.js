@@ -85,6 +85,11 @@ class DistributionChart {
 
     };
 
+    addUpdateFunction(updatePlot)
+    {
+        this.updatePlot = updatePlot;
+    }
+
     sortCodes(direction, chart) {
 
         let that = this;
@@ -319,7 +324,9 @@ class DistributionChart {
                        .attr('y', (d) => this.allYScale(that.codeSortingOrder[+d]))
                        .attr('width', this.groupWidth)
                        .attr('height', this.groupHeight)
-                       .on('click', (d) => console.log(this.codeSemantics[d]));
+                       .on('click', (d) => {
+                           that.updatePlot(that.selectedCountry, that.year, d);
+                       });
 
         let headersGroups = this.svg.select('#distHeaders');
         headersGroups = headersGroups.selectAll('g')
@@ -357,12 +364,11 @@ class DistributionChart {
      */
     update (data, filteredData, selectedCountry){
         
-        // TODO Allow User to switch betwen per capit and absolute
-
-        // TODO Implement Sorting
+        // TODO Make a "clear" click for product type
         
-        // TODO Enable click to impact rest of chart (clicking on product changes
-        //      product for rest of chart).
+        // TODO Maybe Transitions?
+
+        // TODO Allow User to switch betwen per capit and absolute
         
         // TODO (Maybe) use kernel function to show distribution
 

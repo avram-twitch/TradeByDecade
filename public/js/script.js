@@ -61,6 +61,7 @@ let updatePlot = function(countryValue, yearValue, codeValue) {
                 return d.year == yearValue;
             });
             worldMap.loadedData(filtered);
+            distChart.year = yearValue;
             distChart.update(yearData, filtered, countryValue);
             worldMap.selected(countryValue, yearValue, codeValue);
             trendChart.update(countryValue, codeValue, countryData);
@@ -70,6 +71,7 @@ let updatePlot = function(countryValue, yearValue, codeValue) {
 };
 
 worldMap.addUpdateFunction(updatePlot);
+distChart.addUpdateFunction(updatePlot);
 
 countryNameData.then(countryNames => {
     console.log("Creating Dropdown Menus");
@@ -78,36 +80,3 @@ countryNameData.then(countryNames => {
 
 updatePlot("usa", "2000", "1");
 
-//console.log("Loading trade data");
-//d3.json("data/countries/usa.json").then(tradeData => {
-//    console.log("Loaded trade data");
-//    console.log(tradeData);
-//    let filtered = tradeData.filter(function(d) {
-//        return d.year == "1980";
-//    });
-//    console.log("Filtered trade data");
-//    console.log(filtered);
-//    worldMap.loadedData(filtered);
-//
-//    let updatePlot = function(countryValue) {
-//        distChart.update(filtered, countryValue);
-//        worldMap.selectedCountry(filtered, countryValue);
-//        trendChart.update(countryValue, '2', tradeData);
-//    };
-//
-//    worldMap.addUpdateFunction(updatePlot);
-//
-//    countryNameData.then( countryNames => {
-//        console.log("Creating Dropdown Menus");
-//        createDropdownMenu(countryNames, updatePlot);
-//    });
-//
-//    // Select USA by default
-//    updatePlot("usa");
-//});
-//
-//console.log("Loading year data");
-//d3.json("data/years/1980.json").then(yearData => {
-//    console.log(yearData);
-//    distChart.update(yearData, 'usa');
-//});
