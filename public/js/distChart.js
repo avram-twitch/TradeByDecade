@@ -22,15 +22,20 @@ class DistributionChart {
                                "8":"Misc Manufactured",
                                "9":"Other"}
 
-        this.codeSortingOrder = [ {'1':1},
-                                  {'2':2}, 
-                                  {'3':3}, 
-                                  {'4':4}, 
-                                  {'5':5}, 
-                                  {'6':6}, 
-                                  {'7':7}, 
-                                  {'8':8}, 
-                                  {'9':9}] 
+        this.codeSortingOrder =  {'1':1,
+                                  '2':2, 
+                                  '3':3, 
+                                  '4':4, 
+                                  '5':5, 
+                                  '6':6, 
+                                  '7':7, 
+                                  '8':8, 
+                                  '9':9 };
+
+        this.sortingTracker = {'export-dist': 0,
+                               'export-bar': 0,
+                               'import-dist': 0,
+                               'import-bar': 0};
 
         this.headers = ["Product Type", "Export Ranks", "Exports", "Import Ranks", "Imports"];
 
@@ -72,6 +77,44 @@ class DistributionChart {
           .classed("hidden", true);
 
         this.selectedCountry = "";
+
+    };
+
+    sortCodes(direction, chart) {
+
+        let that = this;
+        let fData = this.filteredData;
+        let trackerKey = direction + '-' + chart;
+        let sortDirection = this.sortingTracker[trackerKey];
+        
+        // Resets sorting Directions
+        
+        Object.keys(this.sortingTracker).forEach(function(key, index) {
+            that.sortingTracker[key] = 0;
+        });
+
+        if (sortDirection == 0 || sortDirection == -1)
+        {
+            sortDirection = 1;
+        } else {
+            sortDirection = -1;
+        }
+
+        this.sortingTracker[trackerKey] = sortDirection;
+
+        fData = fData.filter((d) => d.type == direction && d.code != 'all');
+        fData.sort(function(a,b){
+            return d3.ascending(+a.countries.wld * sortDirection, +b.countries.wld * sortDirection);
+        });
+
+        for (let i = 0; i < fData.length; i++)
+        {
+            let code = fData[i].code;
+            this.codeSortingOrder[code] = i + 1;
+        }
+
+        this.createHeaders();
+        this.update(this.data, this.filteredData, this.selectedCountry);
 
     };
 
@@ -215,46 +258,60 @@ class DistributionChart {
      */
     createHeaders(){
 
-        let rowLabelsGroup = this.svg.select('#distRowLabels');
-        rowLabelsGroup = rowLabelsGroup.selectAll('g')
-                                       .data(this.allCodes);
+        let that = this;
 
-        let enterLabels = rowLabelsGroup.enter()
+        let rowLabelsGroups = this.svg.select('#distRowLabels');
+        rowLabelsGroups = rowLabelsGroups.selectAll('g')
+                                         .data(this.allCodes);
+
+        let enterLabels = rowLabelsGroups.enter()
+                                         .append('g');
+        enterLabels.append('text');
+        enterLabels.append('rect');
+
+        rowLabelsGroups = enterLabels.merge(rowLabelsGroups);
+
+        rowLabelsGroups.select('text')
+                       .text((d) => this.codeSemantics[d])
+                       .attr('x', this.groupMargin.left)
+                       .attr('y', (d) => this.allYScale(that.codeSortingOrder[+d] + .5))
+                       .classed('distChartRowLabels', true);
+        rowLabelsGroups.select('rect')
+                       .classed('distChartRectOverlay', true)
+                       .attr('x', this.groupMargin.left)
+                       .attr('y', (d) => this.allYScale(that.codeSortingOrder[+d]))
+                       .attr('width', this.groupWidth)
+                       .attr('height', this.groupHeight)
+                       .on('click', (d) => console.log(this.codeSemantics[d]));
+
+        let headersGroups = this.svg.select('#distHeaders');
+        headersGroups = headersGroups.selectAll('g')
+                                     .data(this.headers);
+        let enterHeaders = headersGroups.enter()
                                         .append('g');
+        enterHeaders.append('text');
+        enterHeaders.append('rect');
 
-        enterLabels.append('text')
-                   .text((d) => this.codeSemantics[d])
-                   .attr('x', this.groupMargin.left)
-                   .attr('y', (d) => this.allYScale(+d + .5))
-                   .classed('distChartRowLabels', true);
-        enterLabels.append('rect')
-                   .classed('distChartRectOverlay', true)
-                   .attr('x', this.groupMargin.left)
-                   .attr('y', (d) => this.allYScale(+d))
-                   .attr('width', this.groupWidth)
-                   .attr('height', this.groupHeight)
-                   .on('click', (d) => console.log(this.codeSemantics[d]));
+        headersGroups = enterHeaders.merge(headersGroups);
 
-        let headersGroup = this.svg.select('#distHeaders');
-        headersGroup = headersGroup.selectAll('g')
-                                   .data(this.headers);
-        let enterHeaders = headersGroup.enter()
-                                       .append('g');
-        enterHeaders.append('text')
-                    .text((d) => d)
-                    .attr('x', (d, i) => this.groupMargin.left + (i * this.groupWidth))
-                    .attr('y', this.allYScale(0.5))
-                    .classed('distChartHeaders', true);
-        enterHeaders.append('rect')
-                    .classed('distChartRectOverlay', true)
-                    .attr('x', (d, i) => this.groupMargin.left + (i * this.groupWidth))
-                    .attr('y', this.groupMargin.top)
-                    .attr('width', this.groupWidth)
-                    .attr('height', this.groupHeight)
-                    .on('click', (d) => console.log(d));
+        headersGroups.select('text')
+                     .text((d) => d)
+                     .attr('x', (d, i) => this.groupMargin.left + (i * this.groupWidth))
+                     .attr('y', this.allYScale(0.5))
+                     .classed('distChartHeaders', true);
+        headersGroups.select('rect')
+                     .classed('distChartRectOverlay', true)
+                     .attr('x', (d, i) => this.groupMargin.left + (i * this.groupWidth))
+                     .attr('y', this.groupMargin.top)
+                     .attr('width', this.groupWidth)
+                     .attr('height', this.groupHeight)
+                     .on('click', (d) => {
+                         console.log(d);
+                         let type = 'export';
+                         let chart = 'bar';
+                         that.sortCodes(type, chart);});
 
     };
-
 
     /*
      * Updates chart given selected country
@@ -274,6 +331,7 @@ class DistributionChart {
         // TODO (Maybe) use kernel function to show distribution
 
         this.data = data;
+        this.filteredData = filteredData;
         this.selectedCountry = selectedCountry;
 
         for (let i = 0; i < this.argsList.length; i++)
@@ -348,7 +406,7 @@ class DistributionChart {
                          let rightShift = that.groupWidth * position;
                          return rightShift + that.groupMargin.left;
                      }))
-                     .attr('y', ((d) => that.allYScale(+d.code) + that.groupMargin.top + that.groupHeight * .25))
+                     .attr('y', ((d) => that.allYScale(that.codeSortingOrder[+d.code]) + that.groupMargin.top + that.groupHeight * .25))
                      .attr('height', (that.groupHeight - that.groupMargin.top - that.groupMargin.bottom) / 2)
                      .attr('width', (d) => barChartScale(d.countries.wld))
                      .classed('distChartExports', (d) => d.type == 'export')
@@ -364,7 +422,7 @@ class DistributionChart {
                          let rightShift = that.groupWidth * position;
                          return rightShift + that.groupMargin.left;
                      }))
-                     .attr('y', ((d) => that.allYScale(+d.code) + that.groupMargin.top))
+                     .attr('y', ((d) => that.allYScale(that.codeSortingOrder[+d.code]) + that.groupMargin.top))
                      .attr('height', this.groupHeight - this.groupMargin.top - this.groupMargin.bottom)
                      .attr('width', this.groupWidth - this.groupMargin.left - this.groupMargin.right)
                      .classed('distChartBackground', true);
@@ -415,9 +473,9 @@ class DistributionChart {
                          let offset = (that.groupWidth - that.groupMargin.right - that.groupMargin.left) / that.dataSizes[d.code] * (i + 1); 
                          return rightShift + that.groupMargin.left + offset;
                      })
-                     .y0((d) => that.allYScale(+d.code + 1))
+                     .y0((d) => that.allYScale(that.codeSortingOrder[+d.code] + 1))
                      .y1(function(d,i) { 
-                         let base = that.allYScale(+d.code + 1);
+                         let base = that.allYScale(that.codeSortingOrder[+d.code] + 1);
                          let height = that.scales[d.code](d.val);
                          return base - height; });
 
@@ -508,7 +566,7 @@ class DistributionChart {
                          let rightShift = that.groupWidth * position;
                          return rightShift + that.groupMargin.left;
                      }))
-                     .attr('y', ((d) => that.allYScale(+d[0].code) + that.groupMargin.top))
+                     .attr('y', ((d) => that.allYScale(that.codeSortingOrder[+d[0].code]) + that.groupMargin.top))
                      .attr('height', this.groupHeight - this.groupMargin.top - this.groupMargin.bottom)
                      .attr('width', this.groupWidth - this.groupMargin.left - this.groupMargin.right)
                      .classed('distChartBackground', true);
@@ -523,7 +581,7 @@ class DistributionChart {
                          let rightShift = that.groupWidth * position;
                          return rightShift + that.groupMargin.left;
                      }))
-                     .attr('y', ((d) => that.allYScale(+d[0].code) + that.groupMargin.top))
+                     .attr('y', ((d) => that.allYScale(that.codeSortingOrder[+d[0].code]) + that.groupMargin.top))
                      .attr('height', this.groupHeight - this.groupMargin.top - this.groupMargin.bottom)
                      .attr('width', this.groupWidth - this.groupMargin.left - this.groupMargin.right)
                      .classed('distChartRectOverlay', true);
@@ -566,13 +624,13 @@ class DistributionChart {
             if (d.length == 0){    // No data for selected country
                 return 0;
             }
-            return that.allYScale(+d[0].code) + that.groupMargin.top;
+            return that.allYScale(that.codeSortingOrder[+d[0].code]) + that.groupMargin.top;
         })
         .attr("y2", (d) => {
             if (d.length == 0){    // No data for selected country
                 return 0;
             }
-            return that.allYScale(+d[0].code + 1)}
+            return that.allYScale(that.codeSortingOrder[+d[0].code] + 1)}
             )
         .classed("distChartSelectedCountryLine", true);
 
