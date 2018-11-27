@@ -129,7 +129,52 @@ class WorldChart {
         this.selectedProductCode = productCode;
         this.updateCharts();
     }
-
+    sigFigs(n, sig) {
+        var mult = Math.pow(10, sig - Math.floor(Math.log(n) / Math.LN10) - 1);
+        return Math.round(n * mult) / mult;
+    }
+    getSpecificData(countryFrom, countryTo) {
+        if( this.tradeData != null ) {
+            let onlySelectedCountryData = this.tradeData.filter(datum => {
+                return datum.orig == countryFrom;
+            });
+            let onlyExportData = onlySelectedCountryData.filter(datum => {
+                return datum.type == "export";
+            });
+            let filteredData = onlyExportData.filter(datum => {
+                return datum.code == this.selectedProductCode;
+            });
+            if( this.selectedYear ) {
+                filteredData = filteredData.filter(datum => {
+                    return datum.year == this.selectedYear;
+                });
+            }
+            let perCapita = this.perCapitaButton.classed("worldChartOptionSelected");
+            let totalExports = 0;
+            for(let productType of filteredData) {
+                let year = productType.year;
+                if( productType.countries[countryTo] ) {
+                    let multiplier = 1;
+                    if( perCapita ) {
+                        if( this.populationData[countryTo] && this.populationData[countryTo][year]) {
+                            multiplier = 1.0/this.populationData[countryTo][year];
+                        }
+                        else {
+                            multiplier = 0;
+                        }
+                    }
+                    if( totalExports ) {
+                        totalExports += +productType.countries[countryTo] * multiplier;
+                    }
+                    else {
+                        totalExports = +productType.countries[countryTo] * multiplier;
+                    }
+                }
+            }
+            return totalExports;
+        }
+        return -1;
+    }
     updateCharts() {
         this.countryPathElements.classed("countryOutline", false).attr("fill", "#CCCCCC");
         if( this.tradeData != null ) {
@@ -171,14 +216,9 @@ class WorldChart {
                     }
                 }
                 let max = Math.max(...Object.entries(totalExportsPerCountry).map(d => d[1]));
-                // for( let country of Object.keys(totalExportsPerCountry)) {
-                //     if( totalExportsPerCountry[country] > max/2 ) {
-                //         console.log(country + " = " + totalExportsPerCountry[country]);
-                //     }
-                // }
                 let colorScale = d3.scaleLinear().domain([0, max]).range(this.colorRange);
                 let axisScale = d3.scaleLinear().domain([max, 0]).range([0,this.legendHeight-1]).nice();
-                this.legendAxisGroup.call(d3.axisRight().scale(axisScale).tickFormat(d3.format("~s")));
+                this.legendAxisGroup.call(d3.axisRight().scale(axisScale).ticks(6, ",f"));
                 Object.keys(totalExportsPerCountry).map(d => {
                     d3.select("#path-" + d )
                                  .attr("fill", colorScale(totalExportsPerCountry[d]));
@@ -197,6 +237,16 @@ class WorldChart {
 
     tooltip_render(tooltip_data) {
         let text = "<h4>" + tooltip_data.title + "</h4>";
+        let perCapita = this.perCapitaButton.classed("worldChartOptionSelected");
+        if( tooltip_data.data != -1 ) {
+            if( perCapita ) {
+                text += "Per Capita Exports: ";
+            }
+            else {
+                text += "Exports: ";
+            }
+            text += this.sigFigs(tooltip_data.data, 3);
+        }
         return text;
     }
 
@@ -209,8 +259,10 @@ class WorldChart {
         let pathSelection = this.svg.selectAll("path")
                 .data(this.countryData);
         this.tip.html((d)=> {
+            console.log(d);
             let tooltip_data = {
-                    "title": d.name
+                    "title": d.name,
+                    "data": this.getSpecificData(this.selectedCountryID, d.id)
                 };
 			return this.tooltip_render(tooltip_data);
         });
