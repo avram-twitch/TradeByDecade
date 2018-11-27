@@ -9,6 +9,16 @@ class TrendChart {
     constructor(){
 
         this.allCodes = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+        this.codeSemantics = {
+            "1":"Food",
+            "2":"Crude Materials",
+            "3":"Fuels",
+            "4":"Animal/Vegetable Oils",
+            "5":"Chemicals",
+            "6":"Manufactured Goods",
+            "7":"Machinery",
+            "8":"Misc Manufactured",
+            "9":"Other"}
 
         let trendChart = d3.select("#trendChart");
         this.margin = {top: 10, right: 20, bottom: 20, left: 50};
@@ -30,17 +40,24 @@ class TrendChart {
 
         let svgGroup  = d3.select('#trendChart').select('svg').append('g').classed('wrapper-group', true);
 
+        d3.select('#trendChart')
+            .append('div')
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
 
         svgGroup.append("g")
             .classed("x-axis", true)
-            .attr("transform", "translate(0," + this.svgHeight + ")");
+            .attr("transform", "translate(75," + this.svgHeight + ")");
 
         svgGroup.append('text').classed('axis-label-x', true);
 
         svgGroup.append("g")
-            .attr("class", "y-axis");
+            .attr("class", "y-axis")
+            .attr("transform", "translate(75,0)");
 
         svgGroup.append('text').classed('axis-label-y', true);
+
 
         this.allYScale = d3.scaleLinear()
             .domain([0, this.allCodes.length])
@@ -90,20 +107,42 @@ class TrendChart {
         //     maxY = maxImports;
         // }
 
-        let xScale = d3.scaleLinear().range([0, this.svgWidth]).domain([1960, 2016]).nice();
+        let xScale = d3.scaleLinear().range([0, this.svgWidth]).domain([new Date(1960, 1), new Date(2016, 1)]).nice();
         let yScale = d3.scaleLinear().range([this.svgHeight, 0]).domain([0, maxY]).nice();
 
 
         let group = d3.select('#trendChart').select('svg').select('.wrapper-group');
 
+        let div = d3.select("#trendChart").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
         group.attr("transform", "translate(" + this.margin.left * 2 + "," + this.margin.top + ")");
+
+        d3.select('.axis-label-x')
+            .text('Year')
+            .style("text-anchor", "middle")
+            .style("font-weight", "bold")
+            .attr('transform', 'translate(' + (this.svgWidth / 2) + ', ' + (this.svgHeight + 20) + ')');
+
+        let codeSelected = 'All Goods';
+        if(importsAndExports[0].code != 'all'){
+            codeSelected = that.codeSemantics[importsAndExports[0].code].toUpperCase();
+        }
+
+        d3.select('.axis-label-y')
+            .text(codeSelected)
+            .style("text-anchor", "middle")
+            .style("font-weight", "bold")
+            .attr('transform', 'translate(' + -50 + ', ' + (this.svgHeight / 2) + ')rotate(-90)');
 
         //Add the x and y axis
         let xAxis = d3.select('.x-axis')
-            .call(d3.axisBottom(xScale));
+            .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%Y")));
 
         let yAxis = d3.select('.y-axis')
             .call(d3.axisLeft(yScale));
+
 
         //Add the countries as circles
         let circles = group.selectAll('circle').data(importsAndExports);
@@ -117,7 +156,7 @@ class TrendChart {
 
         circles.attr("r", 5)
             .attr("cx", function(d) {
-                return xScale(d.year);
+                return xScale(new Date(parseInt(d.year), 1));
             })
             .attr("cy", function(d) {
                 return yScale(d.countries.wld);
@@ -127,7 +166,30 @@ class TrendChart {
                     return 'red';
                 }
                 return 'blue';
+            })
+            .attr("transform", "translate(75,0)")
+            .on("mouseover", function(d) {
+                d3.select(this).attr("r", "10");
+                let code = 'All Goods';
+                if(d.code != 'all'){
+                    code = that.codeSemantics[d.code];
+                }
+                div.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                div.html(d.orig.toUpperCase() + " : "+ d.year + "<br/>" + d.type.toUpperCase() + "<br/>" + code
+                    + "<br/>" + d.countries.wld.toLocaleString())
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                d3.select(this).attr("r", "5");
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
             });
+
+
 
     };
 
