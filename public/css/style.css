@@ -100,6 +100,11 @@
     stroke: red;
 }
 
+.distChartRankLabel {
+    stroke: black;
+    font-size: 12px;
+}
+
 div.tooltip {
     position: absolute;
     text-align: center;

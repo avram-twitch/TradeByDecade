@@ -12,7 +12,7 @@ class CountryDropdown {
 
     createDropdown(countryNameData) {
 
-        countryNameData = countryNameData.filter(d => d.id_3char != "wld");
+        countryNameData = countryNameData.filter(d => d.id_3char != "wld" && d.id_3char != 'xxa');
 
         let that = this;
 
@@ -34,7 +34,9 @@ class CountryDropdown {
                    .classed("dropdown", true)
                    .append("div")
                    .classed("dropdown-content", true)
-                   .append("select");
+                   .append("select")
+                   .attr('id','dropdown-options')
+                   .attr("autocomplete", 'off');
 
         let dropCountry = countryWrap.select("#country-dropdown")
                                      .select('.dropdown-content')
@@ -55,7 +57,7 @@ class CountryDropdown {
 
         // Default to United States
         this.selectedCountry = optionsCountry.filter(d => d.id_3char === "usa")
-                                            .attr("selected", true);
+                                             .attr("selected", true);
 
         dropCountry.on('change', function(d, i) {
             let countryValue = this.options[this.selectedIndex].value;
@@ -68,13 +70,16 @@ class CountryDropdown {
         this.selectedCountry = selectedCountry;
         this.year = selectedYear;
         this.code = selectedCode;
-        this.optionsCountry.filter(d => d.id_3char === selectedCountry)
-                           .attr("selected", (d) => {
-                               return d.id_3char === selectedCountry;
-                           });
+        this.optionsCountry        // TODO Fix: For whatever reason, clicking on USA makes Afghanistan selected...
+            .attr("selected", (d) => {
+                if (d.id_3char === this.selectedCountry)
+                {
+                    return true;
+                }
+                return null;}
+                );
                                
-        console.log('Selected Country:', selectedCountry);
+        console.log('Selected Country:', this.selectedCountry);
     };
-
 
 }

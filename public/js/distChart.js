@@ -577,6 +577,7 @@ class DistributionChart {
         enterGroups.append("path");
         enterGroups.append("line");
         enterGroups.append("rect").classed('distChartRectOverlay', true);
+        enterGroups.append("text");
 
         groups = enterGroups.merge(groups);
 
@@ -681,6 +682,32 @@ class DistributionChart {
              .classed('distChartArea', true)
              .classed('distChartExports', (d) => d[0].direction == 'export')
              .classed('distChartImports', (d) => d[0].direction == 'import');
+
+        // Update Text values
+        
+        let texts = groups.select("text")
+                          .data(selectedCountryData);
+        texts.attr('x', (d) => {
+                if (d.length == 0){
+                    return 0;
+                }
+                let rightShift = that.groupWidth * position;
+                return rightShift + (that.groupMargin.left * 2);
+        })
+             .attr('y', (d) => {
+                 if (d.length == 0){
+                     return 0;
+                 }
+                 return that.allYScale(that.codeSortingOrder[+d[0].code]) + (0.5 * that.groupHeight);
+             })
+             .text((d) => {
+                 if (d.length == 0){
+                     return "";
+                 }
+                 return "#" + (that.dataSizes[d[0].code] - d[0].rank);
+             })
+             .classed('distChartRankLabel', true);
+
 
         // Update Selected Country Lines
         groups = container.selectAll("g")
