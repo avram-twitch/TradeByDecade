@@ -131,7 +131,7 @@ class WorldChart {
     }
 
     updateCharts() {
-        this.countryPathElements.classed("countryOutline", false).attr("fill", "white");
+        this.countryPathElements.classed("countryOutline", false).attr("fill", "#CCCCCC");
         if( this.tradeData != null ) {
             if( this.selectedCountryID != 0 ) {
                 let onlySelectedCountryData = this.tradeData.filter(datum => {
