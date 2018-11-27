@@ -129,6 +129,28 @@ class WorldChart {
         this.selectedProductCode = productCode;
         this.updateCharts();
     }
+    formatNumber(number) {
+        let thousands = 1000;
+        let millions = 1000000;
+        let billions = 1000000000;
+        let trillions = 1000000000000;
+        if (number > trillions) {
+            return (number / trillions).toFixed(1) + "T";
+        }
+
+        else if (number > billions) {
+            return (number / billions).toFixed(1) + "B";
+        }
+
+        else if (number > millions) {
+            return (number / millions).toFixed(1) + "M";
+        }
+
+        else if (number > thousands) {
+            return (number / thousands).toFixed(1) + "K";
+        }
+        return this.sigFigs(number, 2);
+    };
     sigFigs(n, sig) {
         var mult = Math.pow(10, sig - Math.floor(Math.log(n) / Math.LN10) - 1);
         return Math.round(n * mult) / mult;
@@ -236,7 +258,7 @@ class WorldChart {
     }
 
     tooltip_render(tooltip_data) {
-        let text = "<h4>" + tooltip_data.title + "</h4>";
+        let text = "<span style='font-size: " + 16 + "pt;'><b>" + tooltip_data.title + "</b></span><br>";
         let perCapita = this.perCapitaButton.classed("worldChartOptionSelected");
         if( tooltip_data.data != -1 ) {
             if( perCapita ) {
@@ -245,7 +267,7 @@ class WorldChart {
             else {
                 text += "Exports: ";
             }
-            text += this.sigFigs(tooltip_data.data, 3);
+            text += this.formatNumber(tooltip_data.data);
         }
         return text;
     }
