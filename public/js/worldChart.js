@@ -54,18 +54,18 @@ class WorldChart {
                     this.perCapitaButton.classed("worldChartOptionHovered", false);
                 })
                 .text("Per Capita");
-        this.dependencyButton = buttonWrapper.append("label")
-                .classed("worldChartOption", true)
-                .on("click", () => {
-                    this.selectedOption(this.dependencyButton);
-                })
-                .on("mouseover", () => {
-                    this.dependencyButton.classed("worldChartOptionHovered", true);
-                })
-                .on("mouseout", () => {
-                    this.dependencyButton.classed("worldChartOptionHovered", false);
-                })
-                .text("Dependency");
+        // this.dependencyButton = buttonWrapper.append("label")
+        //         .classed("worldChartOption", true)
+        //         .on("click", () => {
+        //             this.selectedOption(this.dependencyButton);
+        //         })
+        //         .on("mouseover", () => {
+        //             this.dependencyButton.classed("worldChartOptionHovered", true);
+        //         })
+        //         .on("mouseout", () => {
+        //             this.dependencyButton.classed("worldChartOptionHovered", false);
+        //         })
+        //         .text("Dependency");
 
         this.verticalMargin = 20;
         this.horizontalMargin = 20;
@@ -102,7 +102,7 @@ class WorldChart {
     selectedOption(button) {
         this.volumeButton.classed("worldChartOptionSelected", false);
         this.perCapitaButton.classed("worldChartOptionSelected", false);
-        this.dependencyButton.classed("worldChartOptionSelected", false);
+        //this.dependencyButton.classed("worldChartOptionSelected", false);
         button.classed("worldChartOptionSelected", true);
         this.updateCharts();
     }
