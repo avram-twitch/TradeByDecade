@@ -54,6 +54,31 @@ class WorldChart {
                     this.perCapitaButton.classed("worldChartOptionHovered", false);
                 })
                 .text("Per Capita");
+        this.exportsButton = buttonWrapper.append("label")
+                .classed("worldChartOption", true)
+                .classed("worldChartOptionSelected", true)
+                .on("click", () => {
+                    this.selectedOption(this.exportsButton);
+                })
+                .on("mouseover", () => {
+                    this.exportsButton.classed("worldChartOptionHovered", true);
+                })
+                .on("mouseout", () => {
+                    this.exportsButton.classed("worldChartOptionHovered", false);
+                })
+                .text("Exports");
+        this.importsButton = buttonWrapper.append("label")
+                .classed("worldChartOption", true)
+                .on("click", () => {
+                    this.selectedOption(this.importsButton);
+                })
+                .on("mouseover", () => {
+                    this.importsButton.classed("worldChartOptionHovered", true);
+                })
+                .on("mouseout", () => {
+                    this.importsButton.classed("worldChartOptionHovered", false);
+                })
+                .text("Imports");
         // this.dependencyButton = buttonWrapper.append("label")
         //         .classed("worldChartOption", true)
         //         .on("click", () => {
@@ -100,10 +125,18 @@ class WorldChart {
     };
 
     selectedOption(button) {
-        this.volumeButton.classed("worldChartOptionSelected", false);
-        this.perCapitaButton.classed("worldChartOptionSelected", false);
-        //this.dependencyButton.classed("worldChartOptionSelected", false);
-        button.classed("worldChartOptionSelected", true);
+        if( button == this.volumeButton || button == this.perCapitaButton) {
+            this.volumeButton.classed("worldChartOptionSelected", false);
+            this.perCapitaButton.classed("worldChartOptionSelected", false);
+            //this.dependencyButton.classed("worldChartOptionSelected", false);
+            button.classed("worldChartOptionSelected", true);
+        }
+        else {
+            this.exportsButton.classed("worldChartOptionSelected", false);
+            this.importsButton.classed("worldChartOptionSelected", false);
+            //this.dependencyButton.classed("worldChartOptionSelected", false);
+            button.classed("worldChartOptionSelected", true);
+        }
         this.updateCharts();
     }
 
@@ -160,10 +193,15 @@ class WorldChart {
             let onlySelectedCountryData = this.tradeData.filter(datum => {
                 return datum.orig == countryFrom;
             });
-            let onlyExportData = onlySelectedCountryData.filter(datum => {
-                return datum.type == "export";
+            let showExports = this.exportsButton.classed("worldChartOptionSelected");
+            let filterText = "export";
+            if( !showExports ) {
+                filterText = "import";
+            }
+            let filteredData = onlySelectedCountryData.filter(datum => {
+                return datum.type == filterText;
             });
-            let filteredData = onlyExportData.filter(datum => {
+            filteredData = filteredData.filter(datum => {
                 return datum.code == this.selectedProductCode;
             });
             if( this.selectedYear ) {
@@ -204,10 +242,15 @@ class WorldChart {
                 let onlySelectedCountryData = this.tradeData.filter(datum => {
                     return datum.orig == this.selectedCountryID;
                 });
-                let onlyExportData = onlySelectedCountryData.filter(datum => {
-                    return datum.type == "export";
+                let showExports = this.exportsButton.classed("worldChartOptionSelected");
+                let filterText = "export";
+                if( !showExports ) {
+                    filterText = "import";
+                }
+                let filteredData = onlySelectedCountryData.filter(datum => {
+                    return datum.type == filterText;
                 });
-                let filteredData = onlyExportData.filter(datum => {
+                filteredData = filteredData.filter(datum => {
                     return datum.code == this.selectedProductCode;
                 });
                 if( this.selectedYear ) {
@@ -261,11 +304,16 @@ class WorldChart {
         let text = "<span style='font-size: " + 16 + "pt;'><b>" + tooltip_data.title + "</b></span><br>";
         let perCapita = this.perCapitaButton.classed("worldChartOptionSelected");
         if( tooltip_data.data != -1 ) {
+            let showExports = this.exportsButton.classed("worldChartOptionSelected");
+            let tradeType = "Exports";
+            if( !showExports ) {
+                tradeType = "Imports";
+            }
             if( perCapita ) {
-                text += "Per Capita Exports: ";
+                text += "Per Capita " + tradeType + ": ";
             }
             else {
-                text += "Exports: ";
+                text += tradeType + ": ";
             }
             text += this.formatNumber(tooltip_data.data);
         }
