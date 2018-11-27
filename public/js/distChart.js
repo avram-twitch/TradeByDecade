@@ -441,6 +441,15 @@ class DistributionChart {
 
         let fData = data.filter((d) => d.type == direction && d.code != 'all');
 
+        if (fData.length == 0)
+        {
+            let container = this.svg.select('#' + chart + "_" + direction);
+            let groups = container.selectAll("g")
+                                  .data(fData);
+            groups.exit().remove();
+            return;
+        }
+
         let max = 0;
 
         for (let i = 0; i < fData.length; i++)

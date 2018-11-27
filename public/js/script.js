@@ -1,6 +1,7 @@
 let worldMap = new WorldChart();
 let distChart = new DistributionChart();
 let trendChart = new TrendChart();
+let dropdownMenu = new CountryDropdown();
 
 console.log("Loading country population data");
 let countryPopulationData = d3.csv('data/country_populations.csv');
@@ -66,6 +67,7 @@ let updatePlot = function(countryValue, yearValue, codeValue) {
             distChart.update(yearData, filtered, countryValue);
             worldMap.selected(countryValue, yearValue, codeValue);
             trendChart.update(countryValue, codeValue, countryData);
+            dropdownMenu.update(countryValue, yearValue, codeValue);
         });
 
     });
@@ -73,10 +75,11 @@ let updatePlot = function(countryValue, yearValue, codeValue) {
 
 worldMap.addUpdateFunction(updatePlot);
 distChart.addUpdateFunction(updatePlot);
+dropdownMenu.addUpdateFunction(updatePlot);
 
 countryNameData.then(countryNames => {
     console.log("Creating Dropdown Menus");
-    createDropdownMenu(countryNames, updatePlot);
+    dropdownMenu.createDropdown(countryNames);
 });
 
 updatePlot("usa", "2000", "all");
