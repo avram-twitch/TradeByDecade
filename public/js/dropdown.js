@@ -69,7 +69,10 @@ class CountryDropdown {
         this.year = selectedYear;
         this.code = selectedCode;
         this.optionsCountry.filter(d => d.id_3char === selectedCountry)
-                           .attr("selected", true);
+                           .attr("selected", (d) => {
+                               return d.id_3char === selectedCountry;
+                           });
+                               
         console.log('Selected Country:', selectedCountry);
     };
 

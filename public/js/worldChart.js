@@ -357,7 +357,7 @@ class WorldChart {
                 .on("click", d => {
                     d3.event.stopPropagation();
                     this.highlightedCountryID = 0;
-                    this.updateFunction(d.id, '1980', '2');
+                    this.updateFunction(d.id, '1980', '2'); // Needs to be changed
                 });
         pathSelection.exit().remove();
         pathSelection = pathEnterSelection.merge(pathSelection);
