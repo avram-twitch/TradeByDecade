@@ -7,6 +7,7 @@
     width: 45%;
     display: inline-block;
     position: relative;
+    vertical-align: top;
 }
 .worldChart {
     height: 400px;
