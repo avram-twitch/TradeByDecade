@@ -55,10 +55,6 @@ class CountryDropdown {
         optionsCountry = optionsCountryEnter.merge(optionsCountry);
         this.optionsCountry = optionsCountry;
 
-        // Default to United States
-        this.selectedCountry = optionsCountry.filter(d => d.id_3char === "usa")
-                                             .attr("selected", true);
-
         dropCountry.on('change', function(d, i) {
             let countryValue = this.options[this.selectedIndex].value;
             updatePlot(countryValue, that.year, that.code);
@@ -67,18 +63,12 @@ class CountryDropdown {
     };
 
     update(selectedCountry, selectedYear, selectedCode) {
+        let oldSelectedCountry = this.selectedCountry;
         this.selectedCountry = selectedCountry;
+        this.optionsCountry.filter(d => d.id_3char == oldSelectedCountry).attr("selected", null);
+        this.optionsCountry.filter(d => d.id_3char == this.selectedCountry).attr("selected", true);
         this.year = selectedYear;
-        this.code = selectedCode;
-        this.optionsCountry        // TODO Fix: For whatever reason, clicking on USA makes Afghanistan selected...
-            .attr("selected", (d) => {
-                if (d.id_3char === this.selectedCountry)
-                {
-                    return true;
-                }
-                return null;}
-                );
-                               
+        this.code = selectedCode;       
         console.log('Selected Country:', this.selectedCountry);
     };
 
