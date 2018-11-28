@@ -66,6 +66,18 @@
     opacity: 0.0;
 }
 
+.distChartHeaderOverlay {
+    fill: #ffffff;
+    opacity: 0.0;
+    cursor: s-resize;
+}
+
+.distChartRowLabelOverlay {
+    fill: #ffffff;
+    opacity: 0.0;
+    cursor: e-resize;
+}
+
 .distChartArea {
     opacity: .8;
 }
@@ -84,10 +96,13 @@
 
 .distChartHeaders {
     stroke: black;
+    font-size: 0.8vw;
+    cursor: pointer;
 }
 
 .distChartRowLabels {
     stroke: black;
+    font-size: 0.6vw;
 }
 
 .distChartSelectedCountryLine {
@@ -103,10 +118,12 @@
 .distChartRankLabel {
     stroke: black;
     font-size: 12px;
+    alignment-baseline: middle;
 }
 
 .barChartLabelLeft {
-    stroke: black;
+    stroke: white;
+    fill: white;
     font-size: 10px;
     text-anchor: end; 
 }

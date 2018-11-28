@@ -353,7 +353,7 @@ class DistributionChart {
                        .attr('y', (d) => this.allYScale(that.codeSortingOrder[+d] + .5))
                        .classed('distChartRowLabels', true);
         rowLabelsGroups.select('rect')
-                       .classed('distChartRectOverlay', true)
+                       .classed('distChartRowLabelOverlay', true)
                        .attr('x', this.groupMargin.left)
                        .attr('y', (d) => this.allYScale(that.codeSortingOrder[+d]))
                        .attr('width', this.groupWidth)
@@ -380,7 +380,7 @@ class DistributionChart {
                      .attr('y', this.allYScale(0.5))
                      .classed('distChartHeaders', true);
         headersGroups.select('rect')
-                     .classed('distChartRectOverlay', true)
+                     .classed('distChartHeaderOverlay', true)
                      .attr('x', (d, i) => this.groupMargin.left + (i * this.groupWidth))
                      .attr('y', this.groupMargin.top)
                      .attr('width', this.groupWidth)
@@ -584,9 +584,16 @@ class DistributionChart {
              {
                  offset = that.barChartScale(d.countries.wld / d.population);
              }
-             return rightShift + that.groupMargin.left + offset;
+
+             if (that.groupMargin.left + offset > that.groupWidth / 2)
+             {
+                 return rightShift + offset;
+             }
+             else{
+                 return rightShift + (2 * that.groupMargin.left) + offset;
+             }
         })
-             .attr("y", (d) => that.allYScale(that.codeSortingOrder[+d.code]) + that.groupMargin.top + (that.groupHeight / 2))
+             .attr("y", (d) => that.allYScale(that.codeSortingOrder[+d.code]) + (that.groupMargin.top * 2) + (that.groupHeight / 2))
              .text((d) => {
                  if (type == "abs")
                  {
