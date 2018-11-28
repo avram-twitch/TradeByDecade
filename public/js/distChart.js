@@ -472,7 +472,17 @@ class DistributionChart {
 
         for (let i = 0; i < fData.length; i++)
         {
-            let val = fData[i].countries.wld;
+            let val = 0;
+            if (type == "abs")
+            {
+                val = fData[i].countries.wld;
+            }
+            
+            if (type == "percap")
+            {
+                val = fData[i].countries.wld / fData[i].population;
+            }
+
             if (val > max)
             {
                 max = val;
@@ -512,7 +522,17 @@ class DistributionChart {
                      }))
                      .attr('y', ((d) => that.allYScale(that.codeSortingOrder[+d.code]) + that.groupMargin.top + that.groupHeight * .25))
                      .attr('height', (that.groupHeight - that.groupMargin.top - that.groupMargin.bottom) / 2)
-                     .attr('width', (d) => that.barChartScale(d.countries.wld))
+                     .attr('width', (d) => {
+                         if (type == "abs")
+                         {
+                             return that.barChartScale(d.countries.wld);
+                         }
+                         if (type == "percap")
+                         {
+                             return that.barChartScale(d.countries.wld / d.population);  
+                         }
+                         return;
+                     })
                      .classed('distChartExports', (d) => d.type == 'export')
                      .classed('distChartImports', (d) => d.type == 'import');
 
@@ -554,18 +574,52 @@ class DistributionChart {
                           });
 
         texts.attr('x', (d, i) => {
-            let rightShift = that.groupWidth * position;
-            let offset = that.barChartScale(d.countries.wld);
-            return rightShift + that.groupMargin.left + offset;
+             let rightShift = that.groupWidth * position;
+             let offset;
+             if (type == "abs")
+             {
+                 offset = that.barChartScale(d.countries.wld);
+             }
+             if (type == "percap")
+             {
+                 offset = that.barChartScale(d.countries.wld / d.population);
+             }
+             return rightShift + that.groupMargin.left + offset;
         })
              .attr("y", (d) => that.allYScale(that.codeSortingOrder[+d.code]) + that.groupMargin.top + (that.groupHeight / 2))
-             .text((d) => that.formatNumber(d.countries.wld))
+             .text((d) => {
+                 if (type == "abs")
+                 {
+                     return that.formatNumber(d.countries.wld);
+                 }
+                 if (type == "percap")
+                 {
+                     return that.formatNumber(d.countries.wld / d.population);
+                 }
+                 return;
+             })
              .classed("barChartLabelLeft", (d) => {
-                 let offset = that.barChartScale(d.countries.wld);
+                 let offset;
+                 if (type == "abs")
+                 {
+                     offset = that.barChartScale(d.countries.wld);
+                 }
+                 if (type == "percap")
+                 {
+                     offset = that.barChartScale(d.countries.wld / d.population);
+                 }
                  return that.groupMargin.left + offset >= that.groupWidth / 2;
              })
              .classed("barChartLabelRight", (d) => {
-                 let offset = that.barChartScale(d.countries.wld);
+                 let offset;
+                 if (type == "abs")
+                 {
+                     offset = that.barChartScale(d.countries.wld);
+                 }
+                 if (type == "percap")
+                 {
+                     offset = that.barChartScale(d.countries.wld / d.population);
+                 }
                  return that.groupMargin.left + offset < that.groupWidth / 2;
              });
 
