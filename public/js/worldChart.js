@@ -329,7 +329,6 @@ class WorldChart {
         let pathSelection = this.svg.selectAll("path")
                 .data(this.countryData);
         this.tip.html((d)=> {
-            console.log(d);
             let tooltip_data = {
                     "title": d.name,
                     "data": this.getSpecificData(this.selectedCountryID, d.id)
@@ -357,7 +356,7 @@ class WorldChart {
                 .on("click", d => {
                     d3.event.stopPropagation();
                     this.highlightedCountryID = 0;
-                    this.updateFunction(d.id, '1980', '2'); // Needs to be changed
+                    this.updateFunction(d.id, this.selectedYear, this.selectedProductCode); // Needs to be changed
                 });
         pathSelection.exit().remove();
         pathSelection = pathEnterSelection.merge(pathSelection);
