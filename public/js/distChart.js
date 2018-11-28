@@ -462,7 +462,7 @@ class DistributionChart {
         }
 
         // Note: I deliberately subtract right margin twice for range to provide some padding
-        let barChartScale = d3.scaleLinear()
+        this.barChartScale = d3.scaleLinear()
                               .domain([0,max])
                               .range([this.groupMargin.left, this.groupWidth - this.groupMargin.left - this.groupMargin.right - this.groupMargin.right]); 
 
@@ -477,8 +477,11 @@ class DistributionChart {
 
         enterGroups.append('rect').classed("distChartBar", true);
         enterGroups.append("rect").classed('distChartBackground', true);
+        enterGroups.append("text");
 
         groups = enterGroups.merge(groups);
+
+        // Update Bar charts
 
         let rects = groups.select('.distChartBar')
                           .datum((d) => {
@@ -491,10 +494,11 @@ class DistributionChart {
                      }))
                      .attr('y', ((d) => that.allYScale(that.codeSortingOrder[+d.code]) + that.groupMargin.top + that.groupHeight * .25))
                      .attr('height', (that.groupHeight - that.groupMargin.top - that.groupMargin.bottom) / 2)
-                     .attr('width', (d) => barChartScale(d.countries.wld))
+                     .attr('width', (d) => that.barChartScale(d.countries.wld))
                      .classed('distChartExports', (d) => d.type == 'export')
                      .classed('distChartImports', (d) => d.type == 'import');
 
+        // Update background
 
         rects = groups.select(".distChartBackground")
                           .datum((d) => {
@@ -526,6 +530,27 @@ class DistributionChart {
              .on("mouseout", (d) => { d3.select("#barChartTooltip").classed("hidden", true);});
 
         
+        let texts = groups.select('text')
+                          .datum((d) => {
+                              return d;
+                          });
+
+        texts.attr('x', (d, i) => {
+            let rightShift = that.groupWidth * position;
+            let offset = that.barChartScale(d.countries.wld);
+            return rightShift + that.groupMargin.left + offset;
+        })
+             .attr("y", (d) => that.allYScale(that.codeSortingOrder[+d.code]) + that.groupMargin.top + (that.groupHeight / 2))
+             .text((d) => that.formatNumber(d.countries.wld))
+             .classed("barChartLabelLeft", (d) => {
+                 let offset = that.barChartScale(d.countries.wld);
+                 return that.groupMargin.left + offset >= that.groupWidth / 2;
+             })
+             .classed("barChartLabelRight", (d) => {
+                 let offset = that.barChartScale(d.countries.wld);
+                 return that.groupMargin.left + offset < that.groupWidth / 2;
+             });
+
     };
 
     updateDistCharts(data, args, country) {

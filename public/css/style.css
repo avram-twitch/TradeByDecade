@@ -105,6 +105,18 @@
     font-size: 12px;
 }
 
+.barChartLabelLeft {
+    stroke: black;
+    font-size: 10px;
+    text-anchor: end; 
+}
+
+.barChartLabelRight {
+    stroke: black;
+    font-size: 10px;
+    text-anchor: start; 
+}
+
 div.tooltip {
     position: absolute;
     text-align: center;
