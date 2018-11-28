@@ -502,7 +502,7 @@ class DistributionChart {
         // Note: I deliberately subtract right margin twice for range to provide some padding
         this.barChartScale = d3.scaleLinear()
                               .domain([0,max])
-                              .range([this.groupMargin.left, this.groupWidth - this.groupMargin.left - this.groupMargin.right - this.groupMargin.right]); 
+                              .range([0, this.groupWidth - this.groupMargin.left - this.groupMargin.right - this.groupMargin.right]); 
 
         let container = this.svg.select('#' + chart + "_" + direction);
 
