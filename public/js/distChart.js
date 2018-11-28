@@ -360,8 +360,14 @@ class DistributionChart {
                        .attr('height', this.groupHeight)
                        .on('click', (d) => {
                            d3.event.stopPropagation();
-                           that.updatePlot(that.selectedCountry, that.year, d);
-                           //that.createHeaders();
+                           if (d == that.selectedCode)
+                           {
+                               that.updatePlot(that.selectedCountry, that.year, 'all');
+                           }
+                           else
+                           {
+                               that.updatePlot(that.selectedCountry, that.year, d);
+                           }
                        });
 
         let headersGroups = this.svg.select('#distHeaders');
@@ -388,6 +394,10 @@ class DistributionChart {
                      .on('click', (d) => {
                          d3.event.stopPropagation();
                          let direction = d.direction;
+                         if (direction == 'none')
+                         {
+                             updatePlot(that.selectedCountry, that.year, 'all');
+                         }
                          let chart = d.chart;
                          that.sortCodes(direction, chart);});
 
