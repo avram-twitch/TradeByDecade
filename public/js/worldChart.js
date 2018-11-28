@@ -34,6 +34,7 @@ class WorldChart {
                 .classed("worldChartOptionSelected", true)
                 .on("click", () => {
                     this.selectedOption(this.volumeButton);
+                    this.changePerCapita('abs');
                 })
                 .on("mouseover", () => {
                     this.volumeButton.classed("worldChartOptionHovered", true);
@@ -46,6 +47,7 @@ class WorldChart {
                 .classed("worldChartOption", true)
                 .on("click", () => {
                     this.selectedOption(this.perCapitaButton);
+                    this.changePerCapita('percap');
                 })
                 .on("mouseover", () => {
                     this.perCapitaButton.classed("worldChartOptionHovered", true);
@@ -154,6 +156,10 @@ class WorldChart {
 
     addUpdateFunction(updateFunction) {
         this.updateFunction = updateFunction;
+    }
+
+    addChangePerCapitaFunction(changePerCapitaFunction) {
+        this.changePerCapita = changePerCapitaFunction;
     }
 
     selected(countryID, year, productCode) {

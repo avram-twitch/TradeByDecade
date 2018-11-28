@@ -85,6 +85,7 @@ class DistributionChart {
         d3.select("#barChartTooltip")
           .classed("hidden", true);
 
+        this.type = "abs";
 
     };
 
@@ -105,7 +106,7 @@ class DistributionChart {
         
         if (chart == 'dist')
         {
-            fData = this.filterData(this.data, direction, 'abs');
+            fData = this.filterData(this.data, direction, this.type);
             selectedCountryData = this.getSelectedCountryData(fData, this.selectedCountry);
         }
 
@@ -199,7 +200,7 @@ class DistributionChart {
             return (number / thousands).toFixed(1) + "K";
         }
 
-        return number;
+        return number.toFixed(1);
     };
 
     dist_tooltip_render(data, rank) {
@@ -302,10 +303,15 @@ class DistributionChart {
 
         // Generate Groups
         
-        this.argsList = [{'direction': 'export', 'type': 'abs', 'position': 1, 'chart': 'dist'},
-                         {'direction': 'export', 'type': 'abs', 'position': 2, 'chart': 'bar'},
-                         {'direction': 'import', 'type': 'abs', 'position': 3, 'chart': 'dist'},
-                         {'direction': 'import', 'type': 'abs', 'position': 4, 'chart': 'bar'}];
+//        this.argsList = [{'direction': 'export', 'type': 'abs', 'position': 1, 'chart': 'dist'},
+//                         {'direction': 'export', 'type': 'abs', 'position': 2, 'chart': 'bar'},
+//                         {'direction': 'import', 'type': 'abs', 'position': 3, 'chart': 'dist'},
+//                         {'direction': 'import', 'type': 'abs', 'position': 4, 'chart': 'bar'}];
+
+        this.argsList = [{'direction': 'export', 'position': 1, 'chart': 'dist'},
+                         {'direction': 'export', 'position': 2, 'chart': 'bar'},
+                         {'direction': 'import', 'position': 3, 'chart': 'dist'},
+                         {'direction': 'import', 'position': 4, 'chart': 'bar'}];
 
         this.svg.append('g').attr('id', 'distHeaders');
         this.svg.append('g').attr('id', 'distRowLabels');
@@ -395,8 +401,6 @@ class DistributionChart {
      */
     update (data, filteredData, selectedCountry){
         
-        // TODO Add Text labels for dist chart and bar charts
-        
         // TODO Maybe Transitions?
 
         // TODO Allow User to switch betwen per capit and absolute
@@ -421,6 +425,20 @@ class DistributionChart {
 
     };
 
+    updatePerCapita () {
+        
+        for (let i = 0; i < this.argsList.length; i++)
+        {
+            if (this.argsList[i].chart == 'dist'){
+                this.updateDistCharts(this.data, this.argsList[i], this.selectedCountry);
+            }
+
+            if (this.argsList[i].chart == 'bar'){
+                this.updateBarCharts(this.filteredData, this.argsList[i], this.selectedCountry);
+            }
+        }
+
+    };
 
     /**
      * Given selected country and data args, generates a column of the distribution chart
@@ -435,7 +453,7 @@ class DistributionChart {
         let that = this;
 
         let direction = args.direction;
-        let type = args.type;
+        let type = this.type;
         let position = +args.position;
         let chart = args.chart;
 
@@ -558,7 +576,7 @@ class DistributionChart {
         let that = this;
 
         let direction = args.direction;
-        let type = args.type;
+        let type = this.type;
         let position = +args.position;
         let chart = args.chart;
 
