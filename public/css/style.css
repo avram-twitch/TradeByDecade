@@ -3,13 +3,13 @@
 }
 
 .distChart {
-    height: 500px;
+    height: 450px;
     width: 45%;
     display: inline-block;
     position: relative;
 }
 .worldChart {
-    height: 600px;
+    height: 400px;
     width: 45%;
     display: inline-block;
     position: relative;
