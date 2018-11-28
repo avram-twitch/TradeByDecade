@@ -85,6 +85,7 @@ class DistributionChart {
         d3.select("#barChartTooltip")
           .classed("hidden", true);
 
+        this.type = "abs";
 
     };
 
@@ -105,7 +106,7 @@ class DistributionChart {
         
         if (chart == 'dist')
         {
-            fData = this.filterData(this.data, direction, 'abs');
+            fData = this.filterData(this.data, direction, this.type);
             selectedCountryData = this.getSelectedCountryData(fData, this.selectedCountry);
         }
 
@@ -199,7 +200,7 @@ class DistributionChart {
             return (number / thousands).toFixed(1) + "K";
         }
 
-        return number;
+        return number.toFixed(1);
     };
 
     dist_tooltip_render(data, rank) {
@@ -302,10 +303,15 @@ class DistributionChart {
 
         // Generate Groups
         
-        this.argsList = [{'direction': 'export', 'type': 'abs', 'position': 1, 'chart': 'dist'},
-                         {'direction': 'export', 'type': 'abs', 'position': 2, 'chart': 'bar'},
-                         {'direction': 'import', 'type': 'abs', 'position': 3, 'chart': 'dist'},
-                         {'direction': 'import', 'type': 'abs', 'position': 4, 'chart': 'bar'}];
+//        this.argsList = [{'direction': 'export', 'type': 'abs', 'position': 1, 'chart': 'dist'},
+//                         {'direction': 'export', 'type': 'abs', 'position': 2, 'chart': 'bar'},
+//                         {'direction': 'import', 'type': 'abs', 'position': 3, 'chart': 'dist'},
+//                         {'direction': 'import', 'type': 'abs', 'position': 4, 'chart': 'bar'}];
+
+        this.argsList = [{'direction': 'export', 'position': 1, 'chart': 'dist'},
+                         {'direction': 'export', 'position': 2, 'chart': 'bar'},
+                         {'direction': 'import', 'position': 3, 'chart': 'dist'},
+                         {'direction': 'import', 'position': 4, 'chart': 'bar'}];
 
         this.svg.append('g').attr('id', 'distHeaders');
         this.svg.append('g').attr('id', 'distRowLabels');
@@ -347,7 +353,7 @@ class DistributionChart {
                        .attr('y', (d) => this.allYScale(that.codeSortingOrder[+d] + .5))
                        .classed('distChartRowLabels', true);
         rowLabelsGroups.select('rect')
-                       .classed('distChartRectOverlay', true)
+                       .classed('distChartRowLabelOverlay', true)
                        .attr('x', this.groupMargin.left)
                        .attr('y', (d) => this.allYScale(that.codeSortingOrder[+d]))
                        .attr('width', this.groupWidth)
@@ -374,7 +380,7 @@ class DistributionChart {
                      .attr('y', this.allYScale(0.5))
                      .classed('distChartHeaders', true);
         headersGroups.select('rect')
-                     .classed('distChartRectOverlay', true)
+                     .classed('distChartHeaderOverlay', true)
                      .attr('x', (d, i) => this.groupMargin.left + (i * this.groupWidth))
                      .attr('y', this.groupMargin.top)
                      .attr('width', this.groupWidth)
@@ -394,8 +400,6 @@ class DistributionChart {
      * @param country 3 character id of selected country
      */
     update (data, filteredData, selectedCountry){
-        
-        // TODO Add Text labels for dist chart and bar charts
         
         // TODO Maybe Transitions?
 
@@ -421,6 +425,20 @@ class DistributionChart {
 
     };
 
+    updatePerCapita () {
+        
+        for (let i = 0; i < this.argsList.length; i++)
+        {
+            if (this.argsList[i].chart == 'dist'){
+                this.updateDistCharts(this.data, this.argsList[i], this.selectedCountry);
+            }
+
+            if (this.argsList[i].chart == 'bar'){
+                this.updateBarCharts(this.filteredData, this.argsList[i], this.selectedCountry);
+            }
+        }
+
+    };
 
     /**
      * Given selected country and data args, generates a column of the distribution chart
@@ -435,7 +453,7 @@ class DistributionChart {
         let that = this;
 
         let direction = args.direction;
-        let type = args.type;
+        let type = this.type;
         let position = +args.position;
         let chart = args.chart;
 
@@ -454,7 +472,17 @@ class DistributionChart {
 
         for (let i = 0; i < fData.length; i++)
         {
-            let val = fData[i].countries.wld;
+            let val = 0;
+            if (type == "abs")
+            {
+                val = fData[i].countries.wld;
+            }
+            
+            if (type == "percap")
+            {
+                val = fData[i].countries.wld / fData[i].population;
+            }
+
             if (val > max)
             {
                 max = val;
@@ -494,7 +522,17 @@ class DistributionChart {
                      }))
                      .attr('y', ((d) => that.allYScale(that.codeSortingOrder[+d.code]) + that.groupMargin.top + that.groupHeight * .25))
                      .attr('height', (that.groupHeight - that.groupMargin.top - that.groupMargin.bottom) / 2)
-                     .attr('width', (d) => that.barChartScale(d.countries.wld))
+                     .attr('width', (d) => {
+                         if (type == "abs")
+                         {
+                             return that.barChartScale(d.countries.wld);
+                         }
+                         if (type == "percap")
+                         {
+                             return that.barChartScale(d.countries.wld / d.population);  
+                         }
+                         return;
+                     })
                      .classed('distChartExports', (d) => d.type == 'export')
                      .classed('distChartImports', (d) => d.type == 'import');
 
@@ -536,18 +574,59 @@ class DistributionChart {
                           });
 
         texts.attr('x', (d, i) => {
-            let rightShift = that.groupWidth * position;
-            let offset = that.barChartScale(d.countries.wld);
-            return rightShift + that.groupMargin.left + offset;
+             let rightShift = that.groupWidth * position;
+             let offset;
+             if (type == "abs")
+             {
+                 offset = that.barChartScale(d.countries.wld);
+             }
+             if (type == "percap")
+             {
+                 offset = that.barChartScale(d.countries.wld / d.population);
+             }
+
+             if (that.groupMargin.left + offset > that.groupWidth / 2)
+             {
+                 return rightShift + offset;
+             }
+             else{
+                 return rightShift + (2 * that.groupMargin.left) + offset;
+             }
         })
-             .attr("y", (d) => that.allYScale(that.codeSortingOrder[+d.code]) + that.groupMargin.top + (that.groupHeight / 2))
-             .text((d) => that.formatNumber(d.countries.wld))
+             .attr("y", (d) => that.allYScale(that.codeSortingOrder[+d.code]) + (that.groupMargin.top * 2) + (that.groupHeight / 2))
+             .text((d) => {
+                 if (type == "abs")
+                 {
+                     return that.formatNumber(d.countries.wld);
+                 }
+                 if (type == "percap")
+                 {
+                     return that.formatNumber(d.countries.wld / d.population);
+                 }
+                 return;
+             })
              .classed("barChartLabelLeft", (d) => {
-                 let offset = that.barChartScale(d.countries.wld);
+                 let offset;
+                 if (type == "abs")
+                 {
+                     offset = that.barChartScale(d.countries.wld);
+                 }
+                 if (type == "percap")
+                 {
+                     offset = that.barChartScale(d.countries.wld / d.population);
+                 }
                  return that.groupMargin.left + offset >= that.groupWidth / 2;
              })
              .classed("barChartLabelRight", (d) => {
-                 let offset = that.barChartScale(d.countries.wld);
+                 let offset;
+                 if (type == "abs")
+                 {
+                     offset = that.barChartScale(d.countries.wld);
+                 }
+                 if (type == "percap")
+                 {
+                     offset = that.barChartScale(d.countries.wld / d.population);
+                 }
                  return that.groupMargin.left + offset < that.groupWidth / 2;
              });
 
@@ -558,7 +637,7 @@ class DistributionChart {
         let that = this;
 
         let direction = args.direction;
-        let type = args.type;
+        let type = this.type;
         let position = +args.position;
         let chart = args.chart;
 

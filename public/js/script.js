@@ -79,9 +79,16 @@ let updatePlot = async function(countryValue, yearValue, codeValue) {
     dropdownMenu.update(countryValue, yearValue, codeValue);
 };
 
+let changePerCapita = function(type) {
+    distChart.type = type;
+    distChart.updatePerCapita();
+};
+
 worldMap.addUpdateFunction(updatePlot);
 distChart.addUpdateFunction(updatePlot);
 dropdownMenu.addUpdateFunction(updatePlot);
+
+worldMap.addChangePerCapitaFunction(changePerCapita);
 
 countryNameData.then(countryNames => {
     console.log("Creating Dropdown Menus");
