@@ -53,24 +53,30 @@ d3.json('data/world.json').then( worldJson => {
     });
 });
 
-let updatePlot = function(countryValue, yearValue, codeValue) {
+let yearDataCache = [];
+let countryDataCache = [];
 
-    d3.json("data/countries/" + countryValue + ".json").then(countryData => {
+let updatePlot = async function(countryValue, yearValue, codeValue) {
+    
+    if(!countryDataCache[countryValue]) {
+        console.log("Loading country " + countryValue);
+        countryDataCache[countryValue] = await d3.json("data/countries/" + countryValue + ".json");
+    }
+    if(!yearDataCache[yearValue]) {
+        console.log("Loading year " + yearValue);
+        yearDataCache[yearValue] = await d3.json("data/years/" + yearValue + ".json");
+    }
 
-        d3.json("data/years/" + yearValue + ".json").then(yearData => {
-            let filtered = countryData.filter(function(d) {
-                return d.year == yearValue;
-            });
-            worldMap.loadedData(filtered);
-            distChart.year = yearValue;
-            distChart.selectedCode = codeValue;
-            distChart.update(yearData, filtered, countryValue);
-            worldMap.selected(countryValue, yearValue, codeValue);
-            trendChart.update(countryValue, codeValue, countryData);
-            dropdownMenu.update(countryValue, yearValue, codeValue);
-        });
-
+    let filtered = countryDataCache[countryValue].filter(function(d) {
+        return d.year == yearValue;
     });
+    worldMap.loadedData(filtered);
+    distChart.year = yearValue;
+    distChart.selectedCode = codeValue;
+    distChart.update(yearDataCache[yearValue], filtered, countryValue);
+    worldMap.selected(countryValue, yearValue, codeValue);
+    trendChart.update(countryValue, codeValue, countryDataCache[countryValue]);
+    dropdownMenu.update(countryValue, yearValue, codeValue);
 };
 
 worldMap.addUpdateFunction(updatePlot);
