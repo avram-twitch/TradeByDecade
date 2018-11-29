@@ -241,7 +241,7 @@ class TrendChart {
         let selected = d3.select('#trendChart').select('svg').select('.wrapper-group').selectAll('circle')
             .filter(b => b.year === activeYear)
             .classed('selected-year', true)
-            .attr("r", 15);
+            .attr("r", 10);
         console.log(selected);
     }
 
