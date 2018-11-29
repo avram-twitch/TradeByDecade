@@ -185,7 +185,7 @@ class TrendChart {
 
         circles = circleEnter.merge(circles);
 
-        circles.attr("r", 7)
+        circles.attr("r", 5)
             .attr("cx", function(d) {
                 return xScale(new Date(parseInt(d.year), 1));
             })
@@ -248,7 +248,7 @@ class TrendChart {
     clearHighlight() {
         d3.select('#trendPlot').selectAll('.selected-year')
             .classed('selected-year', false)
-            .attr("r", 7);
+            .attr("r", 5);
     }
 
     tooltipRender(data) {
