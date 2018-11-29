@@ -147,3 +147,41 @@ div.tooltip {
     border-radius: 8px;
     pointer-events: none;
 }
+
+.activeYear-background {
+    font-size: 80px;
+    opacity: .4;
+}
+
+.info-background {
+    font-size: 30px;
+    opacity: .4;
+}
+
+.export-background {
+    font-size: 30px;
+    opacity: .4;
+}
+
+.import-background {
+    font-size: 30px;
+    opacity: .4;
+}
+
+.selected-year{
+    fill: black;
+}
+
+.trend-export{
+    fill: red;
+}
+
+.trend-import{
+    fill: blue;
+}
+
+.hover {
+    stroke-width: 6px;
+    stroke: #000000;
+    opacity: 1;
+}

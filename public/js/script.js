@@ -75,7 +75,7 @@ let updatePlot = async function(countryValue, yearValue, codeValue) {
     distChart.selectedCode = codeValue;
     distChart.update(yearDataCache[yearValue], filtered, countryValue);
     worldMap.selected(countryValue, yearValue, codeValue);
-    trendChart.update(countryValue, codeValue, countryDataCache[countryValue]);
+    trendChart.update(countryValue, codeValue, countryDataCache[countryValue], yearValue);
     dropdownMenu.update(countryValue, yearValue, codeValue);
 };
 
@@ -87,6 +87,7 @@ let changePerCapita = function(type) {
 worldMap.addUpdateFunction(updatePlot);
 distChart.addUpdateFunction(updatePlot);
 dropdownMenu.addUpdateFunction(updatePlot);
+trendChart.addUpdateFunction(updatePlot);
 
 worldMap.addChangePerCapitaFunction(changePerCapita);
 

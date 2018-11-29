@@ -23,8 +23,8 @@ class TrendChart {
         let trendChart = d3.select("#trendChart");
         this.margin = {top: 10, right: 20, bottom: 20, left: 50};
         this.svgBounds = trendChart.node().getBoundingClientRect();
-        this.svgWidth = this.svgBounds.width - this.margin.left - this.margin.right;
-        this.svgHeight = this.svgBounds.width * 0.3 - this.margin.top - this.margin.bottom;
+        this.svgWidth = this.svgBounds.width * 0.9 - this.margin.left - this.margin.right;
+        this.svgHeight = this.svgBounds.width * 0.2 - this.margin.top - this.margin.bottom;
 
         this.groupPadding = 0.1;
         this.groupHeight = (this.svgHeight - this.margin.top - this.margin.bottom) / this.allCodes.length;
@@ -45,6 +45,17 @@ class TrendChart {
             .attr("class", "tooltip")
             .style("opacity", 0);
 
+        svgGroup.append('text').classed('activeYear-background', true)
+            .attr('transform', 'translate(100, 50)');
+
+        svgGroup.append('text').classed('info-background', true)
+            .attr('transform', 'translate(100, 100)');
+
+        svgGroup.append('text').classed('export-background', true)
+            .attr('transform', 'translate(100, 150)');
+
+        svgGroup.append('text').classed('import-background', true)
+            .attr('transform', 'translate(100, 200)');
 
         svgGroup.append("g")
             .classed("x-axis", true)
@@ -66,13 +77,15 @@ class TrendChart {
 
 
     // needs code choice, country selection, data
-    update(country, code, _data){
+    update(country, code, _data, yearValue){
 
         let data = _data.filter(function(d) {
             return d.orig == country;
         });
 
         let that = this;
+
+        let tooltip = d3.select('.tooltip');
 
         /**
          * Finds the max for the specified data
@@ -97,6 +110,14 @@ class TrendChart {
             return d.code == code;
         });
 
+        let exportInfo = importsAndExports.filter(function(d) {
+            return d.year == yearValue && d.type == 'export';
+        });
+
+        let importInfo = importsAndExports.filter(function(d) {
+            return d.year == yearValue && d.type == 'import';
+        });
+
 
         //Find the max for the X and Y data
         // let maxImports = findMax(imports);
@@ -117,18 +138,28 @@ class TrendChart {
             .attr("class", "tooltip")
             .style("opacity", 0);
 
-        group.attr("transform", "translate(" + this.margin.left * 2 + "," + this.margin.top + ")");
-
-        d3.select('.axis-label-x')
-            .text('Year')
-            .style("text-anchor", "middle")
-            .style("font-weight", "bold")
-            .attr('transform', 'translate(' + (this.svgWidth / 2) + ', ' + (this.svgHeight + 20) + ')');
-
         let codeSelected = 'All Goods';
         if(importsAndExports[0].code != 'all'){
             codeSelected = that.codeSemantics[importsAndExports[0].code].toUpperCase();
         }
+
+        group.attr("transform", "translate(" + this.margin.left * 2 + "," + this.margin.top + ")");
+
+        let yearBg = group.select('.activeYear-background').text(country.toUpperCase() +": "+yearValue);
+
+        let infoBg = group.select('.info-background').text("Product Type: " + codeSelected);
+
+        let exportBg = group.select('.export-background').text("Exports: " + exportInfo[0].countries.wld.toLocaleString());
+
+        let importBg = group.select('.import-background').text("Imports: " + importInfo[0].countries.wld.toLocaleString());
+
+
+        d3.select('.axis-label-x')
+            .text('YEAR')
+            .style("text-anchor", "middle")
+            .style("font-weight", "bold")
+            .attr('transform', 'translate(' + (this.svgWidth / 2) + ', ' + (this.svgHeight + 20) + ')');
+
 
         d3.select('.axis-label-y')
             .text(codeSelected)
@@ -154,43 +185,80 @@ class TrendChart {
 
         circles = circleEnter.merge(circles);
 
-        circles.attr("r", 5)
+        circles.attr("r", 7)
             .attr("cx", function(d) {
                 return xScale(new Date(parseInt(d.year), 1));
             })
             .attr("cy", function(d) {
                 return yScale(d.countries.wld);
             })
-            .attr('fill', function(d) {
-                if(d.type == 'export'){
-                    return 'red';
-                }
-                return 'blue';
-            })
-            .attr("transform", "translate(75,0)")
-            .on("mouseover", function(d) {
-                d3.select(this).attr("r", "10");
-                let code = 'All Goods';
-                if(d.code != 'all'){
-                    code = that.codeSemantics[d.code];
-                }
-                div.transition()
-                    .duration(200)
-                    .style("opacity", .9);
-                div.html(d.orig.toUpperCase() + " : "+ d.year + "<br/>" + d.type.toUpperCase() + "<br/>" + code
-                    + "<br/>" + d.countries.wld.toLocaleString())
-                    .style("left", (d3.event.pageX) + "px")
-                    .style("top", (d3.event.pageY - 28) + "px");
-            })
-            .on("mouseout", function(d) {
-                d3.select(this).attr("r", "5");
-                div.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            });
+            .attr("transform", "translate(75,0)");
 
+        //Add the tooltip labels on mouseover
+        circles.on('mouseover', function(d, i) {
+            d3.select(this).classed("hover", true);
+            //show tooltip
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", .9);
+            tooltip.html(that.tooltipRender(d) + "<br/>")
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
 
+        });
+        //hover function for country selection
+        circles.on("mouseout", function(d) {
+            d3.select(this).classed("hover", false);
+            tooltip.transition()
+                .duration(500)
+                .style("opacity", 0);
+        })
+        circles.on('click', (d) => {
+            event.stopPropagation();
+            that.clearHighlight();
+            that.updateFunction(d.orig, d.year, d.code);
+        });
+
+        that.updateHighlightClick(yearValue);
 
     };
+
+    addUpdateFunction(updateFunction) {
+        this.updateFunction = updateFunction;
+    }
+
+    updateHighlightClick(activeYear) {
+
+
+        this.clearHighlight();
+        //highlight bubbles
+        let imported = d3.select('#trendChart').select('svg').select('.wrapper-group').selectAll('circle')
+            .filter(b => b.type === 'import')
+            .classed('trend-import', true);
+        let exported = d3.select('#trendChart').select('svg').select('.wrapper-group').selectAll('circle')
+            .filter(b => b.type === 'export')
+            .classed('trend-export', true);
+        let selected = d3.select('#trendChart').select('svg').select('.wrapper-group').selectAll('circle')
+            .filter(b => b.year === activeYear)
+            .classed('selected-year', true)
+            .attr("r", 15);
+        console.log(selected);
+    }
+
+    clearHighlight() {
+        d3.select('#trendPlot').selectAll('.selected-year')
+            .classed('selected-year', false)
+            .attr("r", 7);
+    }
+
+    tooltipRender(data) {
+        let code = 'All Goods';
+        if(data.code != 'all'){
+            code = this.codeSemantics[data.code];
+        }
+        let text = "<h2>" + data['orig'].toUpperCase() + ": " +  data.year + "<br>" + data.type.toUpperCase() + "<br/>" + code
+            + "<br/>" + data.countries.wld.toLocaleString() + "</h2>";
+        return text;
+    }
 
 }
