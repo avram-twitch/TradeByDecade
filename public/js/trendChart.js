@@ -214,7 +214,7 @@ class TrendChart {
                 .style("opacity", 0);
         })
         circles.on('click', (d) => {
-            event.stopPropagation();
+            d3.event.stopPropagation();
             that.clearHighlight();
             that.updateFunction(d.orig, d.year, d.code);
         });
