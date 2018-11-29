@@ -149,9 +149,20 @@ class TrendChart {
 
         let infoBg = group.select('.info-background').text("Product Type: " + codeSelected);
 
-        let exportBg = group.select('.export-background').text("Exports: " + exportInfo[0].countries.wld.toLocaleString());
 
-        let importBg = group.select('.import-background').text("Imports: " + importInfo[0].countries.wld.toLocaleString());
+        let exportVal = "NAN";
+        let importVal = "NAN";
+        if(exportInfo.length > 0){
+            exportVal = exportInfo[0].countries.wld.toLocaleString();
+        }
+
+        if(importInfo.length > 0){
+            importVal = importInfo[0].countries.wld.toLocaleString();
+        }
+
+        let exportBg = group.select('.export-background').text("Exports: " + exportVal);
+
+        let importBg = group.select('.import-background').text("Imports: " + importVal);
 
 
         d3.select('.axis-label-x')
