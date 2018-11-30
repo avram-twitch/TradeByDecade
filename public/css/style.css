@@ -1,13 +1,26 @@
+.titleDiv {
+    width: 80%
+}
 .documentTitle {
-    margin-left: 30vw;
+/*    margin-left: 30vw; */
+    text-align: center;
 }
 
 .aboutLink {
-    margin-left: 36vw;
+/*    margin-left: 36vw; */
+    text-align: center;
+}
+
+.youtubeDiv {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 iframe {
-    margin-left: 28vw;
+/*    margin-left: 28vw;*/
+    display: block;
 }
 
 .hidden {
