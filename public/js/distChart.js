@@ -516,6 +516,7 @@ class DistributionChart {
         enterGroups.append('rect').classed("distChartBar", true);
         enterGroups.append("rect").classed('distChartBackground', true);
         enterGroups.append("text");
+        enterGroups.append("rect").classed('distChartRectOverlay', true);
 
         groups = enterGroups.merge(groups);
 
@@ -640,6 +641,21 @@ class DistributionChart {
                  return that.groupMargin.left + offset < that.groupWidth / 2;
              });
 
+        let overlays = groups.select(".distChartRectOverlay")
+                             .datum((d) => {
+                                 return d;
+                             });
+
+        overlays.attr('x',(function(d,i) { 
+                         let rightShift = that.groupWidth * position;
+                         return rightShift;
+                     }))
+                     .attr('y', ((d) => that.allYScale(that.codeSortingOrder[+d.code]) + that.groupMargin.top))
+                     .attr('height', this.groupHeight - this.groupMargin.top - this.groupMargin.bottom)
+                     .attr('width', this.groupWidth)
+                     .classed('distChartRectOverlay', true);
+                          
+
     };
 
     updateDistCharts(data, args, country) {
@@ -690,8 +706,8 @@ class DistributionChart {
         enterGroups.append("rect").classed('distChartBackground', true);
         enterGroups.append("path");
         enterGroups.append("line");
-        enterGroups.append("rect").classed('distChartRectOverlay', true);
         enterGroups.append("text");
+        enterGroups.append("rect").classed('distChartRectOverlay', true);
 
         groups = enterGroups.merge(groups);
 
@@ -777,11 +793,11 @@ class DistributionChart {
 
         overlays.attr('x',(function(d,i) { 
                          let rightShift = that.groupWidth * position;
-                         return rightShift + that.groupMargin.left;
+                         return rightShift;
                      }))
                      .attr('y', ((d) => that.allYScale(that.codeSortingOrder[+d[0].code]) + that.groupMargin.top))
                      .attr('height', this.groupHeight - this.groupMargin.top - this.groupMargin.bottom)
-                     .attr('width', this.groupWidth - this.groupMargin.left - this.groupMargin.right)
+                     .attr('width', this.groupWidth)
                      .classed('distChartRectOverlay', true);
                           
 
