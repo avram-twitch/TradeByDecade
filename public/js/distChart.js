@@ -2,9 +2,6 @@ class DistributionChart {
 
     /**
      * Constructor for the DistributionChart
-     *
-     * @param worldHeatMap an instance of --WorldHeatMap-- class
-     * @param trendChart an instance of -- TrendChart-- class
      */
     constructor (){
 
@@ -62,13 +59,17 @@ class DistributionChart {
                             bottom:this.groupHeight * this.groupPadding, 
                             left:this.groupWidth * this.groupPadding};
 
+        // Set Default Selected Values
+
         this.selectedCountry = "";
         this.selectedCode = "all";
         this.year = "";
+        this.type = "abs";
 
         this.createChart();
         this.createHeaders();
 
+        // Set up tooltips
         this.distTip = d3.tip()
                      .attr('id', "distChartTooltip")
                      .attr('class', 'd3-tip')
@@ -85,185 +86,22 @@ class DistributionChart {
         d3.select("#barChartTooltip")
           .classed("hidden", true);
 
-        this.type = "abs";
 
     };
 
+    /**
+     *  Function to add updatePlot callback function
+     */
     addUpdateFunction(updatePlot)
     {
         this.updatePlot = updatePlot;
     }
 
-    sortCodes(direction, chart) {
+    // CHART INITIALIZATION FUNCTIONS
 
-        let that = this;
-        let fData;
-        let selectedCountryData;
-        if (chart == 'bar')
-        {
-            fData = this.filteredData;
-        }
-        
-        if (chart == 'dist')
-        {
-            fData = this.filterData(this.data, direction, this.type);
-            selectedCountryData = this.getSelectedCountryData(fData, this.selectedCountry);
-        }
-
-        let trackerKey = direction + '-' + chart;
-        let sortDirection = this.sortingTracker[trackerKey];
-        
-        // Resets sorting Directions
-        
-        Object.keys(this.sortingTracker).forEach(function(key, index) {
-            that.sortingTracker[key] = 0;
-        });
-
-        if (sortDirection == 0 || sortDirection == -1)
-        {
-            sortDirection = 1;
-        } else {
-            sortDirection = -1;
-        }
-
-        this.sortingTracker[trackerKey] = sortDirection;
-
-
-        if (chart == 'bar')
-        {
-            fData = fData.filter((d) => d.type == direction && d.code != 'all');
-            fData.sort(function(a,b){
-                return d3.ascending(+a.countries.wld * sortDirection, +b.countries.wld * sortDirection);
-            });
-
-            for (let i = 0; i < fData.length; i++)
-            {
-                let code = fData[i].code;
-                this.codeSortingOrder[code] = i + 1;
-            }
-        }
-
-        if (chart == 'dist')
-        {
-            selectedCountryData = selectedCountryData.filter((d) => d[0].direction == direction);
-            selectedCountryData.sort(function(a,b){
-                let aSize = that.dataSizes[a[0].code];
-                let bSize = that.dataSizes[b[0].code];
-                return d3.ascending((aSize - (+a[0].rank)) * sortDirection, (bSize - (+b[0].rank)) * sortDirection);
-            });
-
-            for (let i = 0; i < selectedCountryData.length; i++)
-            {
-                let code = selectedCountryData[i][0].code;
-                this.codeSortingOrder[code] = i + 1;
-            }
-        }
-
-        this.createHeaders();
-        this.update(this.data, this.filteredData, this.selectedCountry);
-
-    };
-
-    loadCountryNameData(countryNameData) {
-        this.countryNameData = {}
-        for (let i = 0; i < countryNameData.length; i++)
-        {
-            let key = countryNameData[i].id_3char;
-            let value = countryNameData[i].name;
-            this.countryNameData[key] = value;
-        }
-    };
-
-    getCountryName(id) {
-        return this.countryNameData[id];
-    };
-
-    formatNumber(number) {
-        let thousands = 1000;
-        let millions = 1000000;
-        let billions = 1000000000;
-        let trillions = 1000000000000;
-
-        if (number > trillions) {
-            return (number / trillions).toFixed(1) + "T";
-        }
-
-        if (number > billions) {
-            return (number / billions).toFixed(1) + "B";
-        }
-
-        if (number > millions) {
-            return (number / millions).toFixed(1) + "M";
-        }
-
-        if (number > thousands) {
-            return (number / thousands).toFixed(1) + "K";
-        }
-
-        return number.toFixed(1);
-    };
-
-    dist_tooltip_render(data, rank) {
-        let fontSizeMax = 15;
-        let fontSizeMin = 9;
-        let fontSize = 0;
-        let fontStep = (fontSizeMax - fontSizeMin) / ((data.length - 1) / 2);
-        let text = "";
-        let mid = ((data.length - 1) / 2);
-        for (let i = 0; i < data.length; i++)
-        {
-            fontSize = Math.max(fontSizeMin, fontSizeMax - (Math.abs(data[i].rank - rank) * fontStep));
-            if (this.selectedCountry == data[i].orig)
-            {
-                text = text + "<span style='font-size: " + fontSize + "pt;'>" + "***#" + data[i].rank + ": " + data[i].name + "($" + this.formatNumber(data[i].val) + ")</span>" + "<br>";
-            }
-            else
-            {
-                text = text + "<span style='font-size: " + fontSize + "pt;'>" + "#" + data[i].rank + ": " + data[i].name + "($" + this.formatNumber(data[i].val) + ")</span>" + "<br>";
-            }
-        }
-        return text;
-    };
-
-    bar_tooltip_render(data, direction) {
-
-        let topN = 5;
-        let headerSize = 15;
-
-        let dataList = [];
-
-        Object.keys(data.countries).forEach(function(key, index) {
-            if (key != 'wld')
-            {
-                dataList.push({'key': key, 'val': +data.countries[key]});
-            }
-        });
-
-        dataList.sort(function(a,b) {
-                return d3.descending(a.val, b.val);
-            });
-
-        let text = "";
-
-        if (direction == 'export')
-        {
-            text = text + "<span style='font-size: " + headerSize + "pt;'><b>Top Exporting Destinations</b></span><br>";
-        }
-
-        if (direction == 'import')
-        {
-            text = text + "<span style='font-size: " + headerSize + "pt;'><b>Top Importing Origins</b></span><br>";
-        }
-
-        for (let i = 0; i < topN; i++)
-        {
-            let name = this.getCountryName(dataList[i].key);
-            let value = dataList[i].val;
-            text = text + "<span>" + "#" + (i + 1) + ": " + name + "($" + this.formatNumber(value) + ")" + "</span>" + "<br>";
-        }
-
-        return text;
-    };
+    /**
+     * Creates the svgs, groups, and scales used by the chart
+     */
 
     createChart() {
 
@@ -303,11 +141,6 @@ class DistributionChart {
 
         // Generate Groups
         
-//        this.argsList = [{'direction': 'export', 'type': 'abs', 'position': 1, 'chart': 'dist'},
-//                         {'direction': 'export', 'type': 'abs', 'position': 2, 'chart': 'bar'},
-//                         {'direction': 'import', 'type': 'abs', 'position': 3, 'chart': 'dist'},
-//                         {'direction': 'import', 'type': 'abs', 'position': 4, 'chart': 'bar'}];
-
         this.argsList = [{'direction': 'export', 'position': 1, 'chart': 'dist'},
                          {'direction': 'export', 'position': 2, 'chart': 'bar'},
                          {'direction': 'import', 'position': 3, 'chart': 'dist'},
@@ -407,14 +240,14 @@ class DistributionChart {
      * Updates chart given selected country
      *
      * @param data import/export data filtered to a single year
-     * @param country 3 character id of selected country
+     * @param filteredData import/export data filtered to a single country
+     * @param selectedCountry 3 character id of selected country
+     * 
      */
     update (data, filteredData, selectedCountry){
         
         // TODO Maybe Transitions?
 
-        // TODO Allow User to switch betwen per capit and absolute
-        
         // TODO (Maybe) use kernel function to show distribution
 
         this.data = data;
@@ -435,6 +268,13 @@ class DistributionChart {
 
     };
 
+    /*
+     * Updates chart upon change of percapita/volume toggle
+     *     (Differs from update() in that it does not change
+     *      the selected country, code, or year)
+     *
+     */
+
     updatePerCapita () {
         
         for (let i = 0; i < this.argsList.length; i++)
@@ -451,9 +291,9 @@ class DistributionChart {
     };
 
     /**
-     * Given selected country and data args, generates a column of the distribution chart
+     * Given selected country and data args, generates a column of the bar charts
      *
-     * @param data data filtered by the selected year
+     * @param data data filtered by the selected country 
      * @param args selected row of this.argsList. Specifies direction, type, and position of column data
      * @param country the 3 char id of selected country
      */
@@ -657,6 +497,14 @@ class DistributionChart {
                           
 
     };
+
+    /**
+     * Given selected country and data args, generates a column of the distribution charts
+     *
+     * @param data data filtered by the selected year
+     * @param args selected row of this.argsList. Specifies direction, type, and position of column data
+     * @param country the 3 char id of selected country
+     */
 
     updateDistCharts(data, args, country) {
 
@@ -880,6 +728,141 @@ class DistributionChart {
 
     };
 
+    // DATA SORTING, FILTERING, AND PARSING
+
+    /*
+     * Changes the ordering of the product codes, based on the chart and direction clicked on
+     *
+     * @param direction string indicating trade direction, "export"/"import"
+     * @param chart string to indicate the chart type, "bar"/"dist"
+     */
+
+    sortCodes(direction, chart) {
+
+        let that = this;
+        let fData;
+        let selectedCountryData;
+        if (chart == 'bar')
+        {
+            fData = this.filteredData;
+        }
+        
+        if (chart == 'dist')
+        {
+            fData = this.filterData(this.data, direction, this.type);
+            selectedCountryData = this.getSelectedCountryData(fData, this.selectedCountry);
+        }
+
+        let trackerKey = direction + '-' + chart;
+        let sortDirection = this.sortingTracker[trackerKey];
+        
+        // Resets sorting Directions
+        
+        Object.keys(this.sortingTracker).forEach(function(key, index) {
+            that.sortingTracker[key] = 0;
+        });
+
+        if (sortDirection == 0 || sortDirection == -1)
+        {
+            sortDirection = 1;
+        } else {
+            sortDirection = -1;
+        }
+
+        this.sortingTracker[trackerKey] = sortDirection;
+
+
+        if (chart == 'bar')
+        {
+            fData = fData.filter((d) => d.type == direction && d.code != 'all');
+            fData.sort(function(a,b){
+                return d3.ascending(+a.countries.wld * sortDirection, +b.countries.wld * sortDirection);
+            });
+
+            for (let i = 0; i < fData.length; i++)
+            {
+                let code = fData[i].code;
+                this.codeSortingOrder[code] = i + 1;
+            }
+        }
+
+        if (chart == 'dist')
+        {
+            selectedCountryData = selectedCountryData.filter((d) => d[0].direction == direction);
+            selectedCountryData.sort(function(a,b){
+                let aSize = that.dataSizes[a[0].code];
+                let bSize = that.dataSizes[b[0].code];
+                return d3.ascending((aSize - (+a[0].rank)) * sortDirection, (bSize - (+b[0].rank)) * sortDirection);
+            });
+
+            for (let i = 0; i < selectedCountryData.length; i++)
+            {
+                let code = selectedCountryData[i][0].code;
+                this.codeSortingOrder[code] = i + 1;
+            }
+        }
+
+        this.createHeaders();
+        this.update(this.data, this.filteredData, this.selectedCountry);
+
+    };
+
+    loadCountryNameData(countryNameData) {
+        this.countryNameData = {}
+        for (let i = 0; i < countryNameData.length; i++)
+        {
+            let key = countryNameData[i].id_3char;
+            let value = countryNameData[i].name;
+            this.countryNameData[key] = value;
+        }
+    };
+
+    /*
+     * Given country 3 character id, gets full country name
+     *
+     * @param id 3 character country id
+     *
+     * @return country name
+     */
+    getCountryName(id) {
+        return this.countryNameData[id];
+    };
+
+    /*
+     * Formats a number in an easier to read format, e.g. in millions/billions, etc.
+     *
+     * @param number The number to be formatted
+     *
+     * @return formatted number
+     */
+
+    formatNumber(number) {
+        let thousands = 1000;
+        let millions = 1000000;
+        let billions = 1000000000;
+        let trillions = 1000000000000;
+
+        if (number > trillions) {
+            return (number / trillions).toFixed(1) + "T";
+        }
+
+        if (number > billions) {
+            return (number / billions).toFixed(1) + "B";
+        }
+
+        if (number > millions) {
+            return (number / millions).toFixed(1) + "M";
+        }
+
+        if (number > thousands) {
+            return (number / thousands).toFixed(1) + "K";
+        }
+
+        return number.toFixed(1);
+    };
+
+
+
     /**
      * Filters data based on direction (import/export) and type (percapita or absolute)
      *
@@ -969,6 +952,13 @@ class DistributionChart {
 
     };
 
+    /*
+     * Generates ranks for data, based on sort order
+     *
+     * @param data data to be ranked
+     *
+     * @return data with 'rank' attribute
+     */
     rank (data){
 
         for (let i = 0; i < data.length; i++)
@@ -1054,5 +1044,87 @@ class DistributionChart {
 
         return output;
 
+    };
+    
+    // TOOLTIP RENDER FUNCTIONS
+    
+    /*
+     * Renders distribution chart tooltip
+     *
+     * @param data 5 countries selected for tooltip
+     * @param rank the "primary" rank that will be rendered with max font size
+     *
+     * @return html for tooltip
+     */
+
+    dist_tooltip_render(data, rank) {
+        let fontSizeMax = 15;
+        let fontSizeMin = 9;
+        let fontSize = 0;
+        let fontStep = (fontSizeMax - fontSizeMin) / ((data.length - 1) / 2);
+        let text = "";
+        let mid = ((data.length - 1) / 2);
+        for (let i = 0; i < data.length; i++)
+        {
+            fontSize = Math.max(fontSizeMin, fontSizeMax - (Math.abs(data[i].rank - rank) * fontStep));
+            if (this.selectedCountry == data[i].orig)
+            {
+                text = text + "<span style='font-size: " + fontSize + "pt;'>" + "***#" + data[i].rank + ": " + data[i].name + "($" + this.formatNumber(data[i].val) + ")</span>" + "<br>";
+            }
+            else
+            {
+                text = text + "<span style='font-size: " + fontSize + "pt;'>" + "#" + data[i].rank + ": " + data[i].name + "($" + this.formatNumber(data[i].val) + ")</span>" + "<br>";
+            }
+        }
+        return text;
+    };
+
+    /*
+     * Renders Bar Chart tooltip
+     *
+     * @param data 5 countries selected for tooltip
+     * @param direction "export" or "import". Determines the header of the tooltip
+     *
+     * @return html for tooltip
+     */
+
+    bar_tooltip_render(data, direction) {
+
+        let topN = 5;
+        let headerSize = 15;
+
+        let dataList = [];
+
+        Object.keys(data.countries).forEach(function(key, index) {
+            if (key != 'wld')
+            {
+                dataList.push({'key': key, 'val': +data.countries[key]});
+            }
+        });
+
+        dataList.sort(function(a,b) {
+                return d3.descending(a.val, b.val);
+            });
+
+        let text = "";
+
+        if (direction == 'export')
+        {
+            text = text + "<span style='font-size: " + headerSize + "pt;'><b>Top Exporting Destinations</b></span><br>";
+        }
+
+        if (direction == 'import')
+        {
+            text = text + "<span style='font-size: " + headerSize + "pt;'><b>Top Importing Origins</b></span><br>";
+        }
+
+        for (let i = 0; i < topN; i++)
+        {
+            let name = this.getCountryName(dataList[i].key);
+            let value = dataList[i].val;
+            text = text + "<span>" + "#" + (i + 1) + ": " + name + "($" + this.formatNumber(value) + ")" + "</span>" + "<br>";
+        }
+
+        return text;
     };
 }
