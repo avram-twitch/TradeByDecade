@@ -7,7 +7,7 @@
 > Process Book Page URL:
 https://strikerz76.github.io/TradeByTheDecade/ProcessBook.pdf
 
-> Demo Video URL: TBD
+> Demo Video URL: https://www.youtube.com/watch?v=m8R3rdzOz2k
 
 ## Motivation
 
