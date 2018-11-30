@@ -1,3 +1,15 @@
+.documentTitle {
+    margin-left: 30vw;
+}
+
+.aboutLink {
+    margin-left: 36vw;
+}
+
+iframe {
+    margin-left: 28vw;
+}
+
 .hidden {
     display: none;
 }
@@ -14,6 +26,11 @@
     width: 45%;
     display: inline-block;
     position: relative;
+}
+
+.trendChart {
+    width: 90%;
+    display: relative;
 }
 .worldMapGraticule {
     fill: none;
