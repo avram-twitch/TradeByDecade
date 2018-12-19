@@ -2,6 +2,7 @@ let worldMap = new WorldChart();
 let distChart = new DistributionChart();
 let trendChart = new TrendChart();
 let dropdownMenu = new CountryDropdown();
+let yearBar = new YearBar();
 
 console.log("Loading country population data");
 let countryPopulationData = d3.csv('data/country_populations.csv');
@@ -71,9 +72,13 @@ let updatePlot = async function(countryValue, yearValue, codeValue) {
         return d.year == yearValue;
     });
     worldMap.loadedData(filtered);
+    yearBar.selectedCode = codeValue;
+    yearBar.year = yearValue;
+    yearBar.selectedCountry = countryValue;
     distChart.year = yearValue;
     distChart.selectedCode = codeValue;
     distChart.update(yearDataCache[yearValue], filtered, countryValue);
+    yearBar.updateBar(yearValue);
     worldMap.selected(countryValue, yearValue, codeValue);
     trendChart.update(countryValue, codeValue, countryDataCache[countryValue], yearValue);
     dropdownMenu.update(countryValue, yearValue, codeValue);
@@ -85,6 +90,7 @@ let changePerCapita = function(type) {
 };
 
 worldMap.addUpdateFunction(updatePlot);
+yearBar.addUpdateFunction(updatePlot);
 distChart.addUpdateFunction(updatePlot);
 dropdownMenu.addUpdateFunction(updatePlot);
 trendChart.addUpdateFunction(updatePlot);

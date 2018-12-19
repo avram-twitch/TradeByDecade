@@ -18,6 +18,25 @@
     justify-content: center;
 }
 
+.country-label {
+    width: 80%;
+    text-align: center;
+    margin: 0;
+}
+
+.dropdown-content {
+    text-align: center;
+    width: 80%;
+}
+
+#activeYearBar {
+    width: 80%;
+}
+
+.slider {
+    width: 100%;
+}
+
 iframe {
 /*    margin-left: 28vw;*/
     display: block;
