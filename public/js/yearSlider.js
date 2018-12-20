@@ -3,7 +3,7 @@ class YearBar {
     constructor() {
 
         this.yearBar = d3.select("#YearBar");
-        this.margin = {top: 10, right: 20, bottom: 20, left: 50}
+        this.margin = {top: 10, right: 20, bottom: 20, left: 20}
         this.svgBounds = this.yearBar.node().getBoundingClientRect();
         this.svgWidth = this.svgBounds.width - this.margin.left - this.margin.right;
         this.svgHeight = 50;
@@ -27,13 +27,15 @@ class YearBar {
                            .attr('max', 2014)
                            .attr('value', 2000)
                            .attr('id', 'year-slider');
+        yearSlider.style('margin-left', this.margin.left + 'px')
+                  .style('margin-right', this.margin.right + 'px');
         this.width = yearSlider.node().getBoundingClientRect().width;
         let sliderLabel = d3.select('.slider-wrap')
                             .append('div').classed('slider-label', true)
                             .append('svg')
                             .attr("id", "slider-label")
                             .attr("height", this.svgHeight)
-                            .attr("width", this.width);
+                            .attr("width", this.width + this.margin.left + this.margin.right);
         let sliderText = sliderLabel.append('text')
                                     .text(2000)
                                     .attr('id', 'slider-text');
@@ -43,11 +45,8 @@ class YearBar {
 
         yearSlider.on('input', function() {
                                            that.activeYear = this.value;
-                                           //that.updateBar(this.value);
-                                           console.log(that.activeYear);
                                            that.updatePlot(that.selectedCountry,that.activeYear, that.selectedCode);
-                                           //that.updateYear(that.activeYear);
-                                           //d3.event.stopPropagation();
+                                           d3.event.stopPropagation();
         })
                   .on("click", function() { d3.event.stopPropagation();});
     };
@@ -60,7 +59,8 @@ class YearBar {
     updateBar(year) {
         let sliderText = d3.select('#slider-text')
                                     .text(year);
-        let yearScale = d3.scaleLinear().domain([1970,2014]).range([0,this.width]);
+        let yearScale = d3.scaleLinear().domain([1970,2014])
+                                        .range([this.margin.left,this.width + this.margin.right]);
         sliderText.attr('x', yearScale(year));
         sliderText.attr('y', 20);
 
