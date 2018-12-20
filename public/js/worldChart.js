@@ -328,11 +328,25 @@ class WorldChart {
 
     createCharts() {
 
+
         let path = d3.geoPath()
                 .projection(this.projection);
+
+        console.log("finished adding normal map components, now adding graticule");
+        let graticule = d3.geoGraticule();
+        let outlineGroup = this.svg.append("g");
+        outlineGroup.append("path")
+                .datum(graticule)
+                .classed('worldMapGraticule', true)
+                .attr('d', path);
+
+        outlineGroup.append("path")
+                .datum({type: "Sphere"})
+                .classed('worldMapOutline', true)
+                .attr("d", path);
         
         // Bind data and create one path per GeoJSON feature
-        let pathSelection = this.svg.selectAll("path")
+        let pathSelection = this.svg.selectAll("path").filter('.world-path')
                 .data(this.countryData);
         this.tip.html((d)=> {
             let tooltip_data = {
@@ -363,24 +377,13 @@ class WorldChart {
                     d3.event.stopPropagation();
                     this.highlightedCountryID = 0;
                     this.updateFunction(d.id, this.selectedYear, this.selectedProductCode); // Needs to be changed
-                });
+                })
+                .classed('world-path', true);
         pathSelection.exit().remove();
         pathSelection = pathEnterSelection.merge(pathSelection);
 
         this.countryPathElements = pathSelection;
 
-        console.log("finished adding normal map components, now adding graticule");
-        let graticule = d3.geoGraticule();
-        let outlineGroup = this.svg.append("g");
-        outlineGroup.append("path")
-                .datum(graticule)
-                .classed('worldMapGraticule', true)
-                .attr('d', path);
-
-        outlineGroup.append("path")
-                .datum({type: "Sphere"})
-                .classed('worldMapOutline', true)
-                .attr("d", path);
 
     };
 }
