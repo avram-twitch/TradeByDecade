@@ -96,6 +96,10 @@ iframe {
 .worldChartOptionSelected {
     background-color: rgb(255, 127, 80);
 }
+.world-path {
+    stroke: black;
+    stroke-opacity: 0.2;
+}
 .countryOutline {
     stroke: rgb(255, 79, 246);
     stroke-width: 1px;

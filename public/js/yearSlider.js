@@ -23,7 +23,7 @@ class YearBar {
                            .append('div').classed('slider-wrap', true)
                            .append('input').classed('slider', true)
                            .attr('type', 'range')
-                           .attr('min', 1970)
+                           .attr('min', 1962)
                            .attr('max', 2014)
                            .attr('value', 2000)
                            .attr('id', 'year-slider');
@@ -39,7 +39,7 @@ class YearBar {
         let sliderText = sliderLabel.append('text')
                                     .text(2000)
                                     .attr('id', 'slider-text');
-        let yearScale = d3.scaleLinear().domain([1970,2014]).range([0,this.width]);
+        let yearScale = d3.scaleLinear().domain([1962,2014]).range([0,this.width]);
         sliderText.attr('x', yearScale(2000));
         sliderText.attr('y', 20);
 
@@ -59,7 +59,7 @@ class YearBar {
     updateBar(year) {
         let sliderText = d3.select('#slider-text')
                                     .text(year);
-        let yearScale = d3.scaleLinear().domain([1970,2014])
+        let yearScale = d3.scaleLinear().domain([1962,2014])
                                         .range([this.margin.left,this.width + this.margin.right]);
         sliderText.attr('x', yearScale(year));
         sliderText.attr('y', 20);

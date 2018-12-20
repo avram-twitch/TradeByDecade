@@ -22,7 +22,7 @@ class WorldChart {
         let worldChart = d3.select("#worldHeatChart");
         this.margin = {top: 10, right: 20, bottom: 20, left: 50};
         this.legendHeight = 120;
-        this.colorRange = ["#000000", "#FF0000"];
+        this.colorRange = ["#ffffff", "#FF0000"];
         this.svgBounds = worldChart.node().getBoundingClientRect();
         this.svgWidth = this.svgBounds.width - this.margin.left - this.margin.right;
         this.svgHeight = this.svgBounds.height;
