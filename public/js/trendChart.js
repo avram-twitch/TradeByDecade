@@ -42,7 +42,8 @@ class TrendChart {
 
         d3.select('#trendChart')
             .append('div')
-            .attr("class", "tooltip")
+            .attr('class', 'd3-trend-tip')
+            //.attr("class", "tooltip")
             .style("opacity", 0);
 
         svgGroup.append('text').classed('activeYear-background', true)
@@ -85,7 +86,8 @@ class TrendChart {
 
         let that = this;
 
-        let tooltip = d3.select('.tooltip');
+//        let tooltip = d3.select('.tooltip');
+        let tooltip = d3.select('.d3-trend-tip');
 
         /**
          * Finds the max for the specified data
@@ -135,7 +137,8 @@ class TrendChart {
         let group = d3.select('#trendChart').select('svg').select('.wrapper-group');
 
         let div = d3.select("#trendChart").append("div")
-            .attr("class", "tooltip")
+//            .attr("class", "tooltip")
+            .attr("class", "d3-trend-tip")
             .style("opacity", 0);
 
         let codeSelected = 'All Goods';
@@ -213,7 +216,7 @@ class TrendChart {
                 .duration(200)
                 .style("opacity", .9);
             tooltip.html(that.tooltipRender(d) + "<br/>")
-                .style("left", (d3.event.pageX) + "px")
+                .style("left", (d3.event.pageX + 10) + "px")
                 .style("top", (d3.event.pageY - 28) + "px");
 
         });
@@ -267,7 +270,7 @@ class TrendChart {
         if(data.code != 'all'){
             code = this.codeSemantics[data.code];
         }
-        let text = "<h2>" + data['orig'].toUpperCase() + ": " +  data.year + "<br>" + data.type.toUpperCase() + "<br/>" + code
+        let text = "<h2 class='trend-tip-text'>" + data['orig'].toUpperCase() + ": " +  data.year + "<br>" + data.type.toUpperCase() + "<br/>" + code
             + "<br/>" + data.countries.wld.toLocaleString() + "</h2>";
         return text;
     }
