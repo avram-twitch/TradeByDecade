@@ -21,9 +21,10 @@ class TrendChart {
             "9":"Other"}
 
         let trendChart = d3.select("#trendChart");
-        this.margin = {top: 10, right: 20, bottom: 20, left: 50};
+        this.margin = {top: 10, right: 150, bottom: 40, left: 20};
         this.svgBounds = trendChart.node().getBoundingClientRect();
-        this.svgWidth = this.svgBounds.width * 0.9 - this.margin.left - this.margin.right;
+        //this.svgWidth = this.svgBounds.width * 0.9 - this.margin.left - this.margin.right;
+        this.svgWidth = this.svgBounds.width - this.margin.left - this.margin.right;
         this.svgHeight = this.svgBounds.width * 0.2 - this.margin.top - this.margin.bottom;
 
         this.groupPadding = 0.1;
@@ -130,7 +131,7 @@ class TrendChart {
         //     maxY = maxImports;
         // }
 
-        let xScale = d3.scaleLinear().range([0, this.svgWidth]).domain([new Date(1960, 1), new Date(2016, 1)]).nice();
+        let xScale = d3.scaleLinear().range([0, this.svgWidth - this.margin.left - this.margin.right]).domain([new Date(1960, 1), new Date(2016, 1)]).nice();
         let yScale = d3.scaleLinear().range([this.svgHeight, 0]).domain([0, maxY]).nice();
 
 
@@ -156,30 +157,30 @@ class TrendChart {
         let exportVal = "NAN";
         let importVal = "NAN";
         if(exportInfo.length > 0){
-            exportVal = exportInfo[0].countries.wld.toLocaleString();
+            exportVal = exportInfo[0].countries.wld;
         }
 
         if(importInfo.length > 0){
-            importVal = importInfo[0].countries.wld.toLocaleString();
+            importVal = importInfo[0].countries.wld;
         }
 
-        let exportBg = group.select('.export-background').text("Exports: " + exportVal);
+        let exportBg = group.select('.export-background').text("Exports: " + this.formatNumber(exportVal));
 
-        let importBg = group.select('.import-background').text("Imports: " + importVal);
+        let importBg = group.select('.import-background').text("Imports: " + this.formatNumber(importVal));
 
 
         d3.select('.axis-label-x')
             .text('YEAR')
             .style("text-anchor", "middle")
             .style("font-weight", "bold")
-            .attr('transform', 'translate(' + (this.svgWidth / 2) + ', ' + (this.svgHeight + 20) + ')');
+            .attr('transform', 'translate(' + (this.svgWidth / 2) + ', ' + (this.svgHeight + this.margin.bottom) + ')');
 
 
         d3.select('.axis-label-y')
             .text(codeSelected)
             .style("text-anchor", "middle")
             .style("font-weight", "bold")
-            .attr('transform', 'translate(' + -50 + ', ' + (this.svgHeight / 2) + ')rotate(-90)');
+            .attr('transform', 'translate(' + (-this.margin.left) + ', ' + (this.svgHeight / 2) + ')rotate(-90)');
 
         //Add the x and y axis
         let xAxis = d3.select('.x-axis')
@@ -271,7 +272,7 @@ class TrendChart {
             code = this.codeSemantics[data.code];
         }
         let text = "<h2 class='trend-tip-text'>" + data['orig'].toUpperCase() + ": " +  data.year + "<br>" + data.type.toUpperCase() + "<br/>" + code
-            + "<br/>" + data.countries.wld.toLocaleString() + "</h2>";
+            + "<br/>" + this.formatNumber(data.countries.wld) + "</h2>";
         return text;
     }
 
