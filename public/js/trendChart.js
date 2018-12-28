@@ -183,7 +183,7 @@ class TrendChart {
             .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%Y")));
 
         let yAxis = d3.select('.y-axis')
-            .call(d3.axisLeft(yScale));
+            .call(d3.axisLeft(yScale).tickFormat((d) => that.formatNumber(d)));
 
 
         //Add the countries as circles
@@ -271,5 +271,30 @@ class TrendChart {
             + "<br/>" + data.countries.wld.toLocaleString() + "</h2>";
         return text;
     }
+
+    formatNumber(number) {
+        let thousands = 1000;
+        let millions = 1000000;
+        let billions = 1000000000;
+        let trillions = 1000000000000;
+
+        if (number >= trillions) {
+            return (number / trillions).toFixed(1) + "T";
+        }
+
+        if (number >= billions) {
+            return (number / billions).toFixed(1) + "B";
+        }
+
+        if (number >= millions) {
+            return (number / millions).toFixed(1) + "M";
+        }
+
+        if (number >= thousands) {
+            return (number / thousands).toFixed(1) + "K";
+        }
+
+        return number.toFixed(1);
+    };
 
 }

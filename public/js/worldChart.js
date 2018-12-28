@@ -173,22 +173,24 @@ class WorldChart {
         let millions = 1000000;
         let billions = 1000000000;
         let trillions = 1000000000000;
+
         if (number > trillions) {
             return (number / trillions).toFixed(1) + "T";
         }
 
-        else if (number > billions) {
+        if (number > billions) {
             return (number / billions).toFixed(1) + "B";
         }
 
-        else if (number > millions) {
+        if (number > millions) {
             return (number / millions).toFixed(1) + "M";
         }
 
-        else if (number > thousands) {
+        if (number > thousands) {
             return (number / thousands).toFixed(1) + "K";
         }
-        return this.sigFigs(number, 2);
+
+        return number.toFixed(1);
     };
     sigFigs(n, sig) {
         var mult = Math.pow(10, sig - Math.floor(Math.log(n) / Math.LN10) - 1);
@@ -387,37 +389,5 @@ class WorldChart {
         this.countryPathElements = pathSelection;
 
 
-    };
-    /*
-     * Formats a number in an easier to read format, e.g. in millions/billions, etc.
-     *
-     * @param number The number to be formatted
-     *
-     * @return formatted number
-     */
-
-    formatNumber(number) {
-        let thousands = 1000;
-        let millions = 1000000;
-        let billions = 1000000000;
-        let trillions = 1000000000000;
-
-        if (number > trillions) {
-            return (number / trillions).toFixed(1) + "T";
-        }
-
-        if (number > billions) {
-            return (number / billions).toFixed(1) + "B";
-        }
-
-        if (number > millions) {
-            return (number / millions).toFixed(1) + "M";
-        }
-
-        if (number > thousands) {
-            return (number / thousands).toFixed(1) + "K";
-        }
-
-        return number.toFixed(1);
     };
 }
