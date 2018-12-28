@@ -148,7 +148,7 @@ class TrendChart {
 
         group.attr("transform", "translate(" + this.margin.left * 2 + "," + this.margin.top + ")");
 
-        let yearBg = group.select('.activeYear-background').text(country.toUpperCase() +": "+yearValue);
+        let yearBg = group.select('.activeYear-background').text(that.getCountryName(country) +": "+yearValue);
 
         let infoBg = group.select('.info-background').text("Product Type: " + codeSelected);
 
@@ -298,6 +298,25 @@ class TrendChart {
         }
 
         return number.toFixed(1);
+    };
+    loadCountryNameData(countryNameData) {
+        this.countryNameData = {}
+        for (let i = 0; i < countryNameData.length; i++)
+        {
+            let key = countryNameData[i].id_3char;
+            let value = countryNameData[i].name;
+            this.countryNameData[key] = value;
+        }
+    };
+    /*
+     * Given country 3 character id, gets full country name
+     *
+     * @param id 3 character country id
+     *
+     * @return country name
+     */
+    getCountryName(id) {
+        return this.countryNameData[id];
     };
 
 }

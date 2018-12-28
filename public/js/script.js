@@ -16,6 +16,7 @@ let countryNameData = d3.csv('data/country_names.csv');
 countryNameData.then( countryNames => {
     console.log("Loaded country name data");
     distChart.loadCountryNameData(countryNames);
+    trendChart.loadCountryNameData(countryNames);
 });
 
 

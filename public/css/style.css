@@ -218,8 +218,9 @@ div.tooltip {
 }
 
 .activeYear-background {
-    font-size: 80px;
+    font-size: 40px;
     opacity: .4;
+    font-weight: bold;
 }
 
 .info-background {
