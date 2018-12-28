@@ -242,6 +242,7 @@ class WorldChart {
         return -1;
     }
     updateCharts() {
+        let that = this;
         this.countryPathElements.classed("countryOutline", false).attr("fill", "#CCCCCC");
         if( this.tradeData != null ) {
             if( this.selectedCountryID != 0 ) {
@@ -289,7 +290,8 @@ class WorldChart {
                 let max = Math.max(...Object.entries(totalExportsPerCountry).map(d => d[1]));
                 let colorScale = d3.scaleLinear().domain([0, max]).range(this.colorRange);
                 let axisScale = d3.scaleLinear().domain([max, 0]).range([0,this.legendHeight-1]).nice();
-                this.legendAxisGroup.call(d3.axisRight().scale(axisScale).ticks(6, ",f"));
+                //this.legendAxisGroup.call(d3.axisRight().scale(axisScale).ticks(6, ",f"));
+                this.legendAxisGroup.call(d3.axisRight().scale(axisScale).tickFormat((d) => that.formatNumber(d)));
                 Object.keys(totalExportsPerCountry).map(d => {
                     d3.select("#path-" + d )
                                  .attr("fill", colorScale(totalExportsPerCountry[d]));
@@ -385,5 +387,37 @@ class WorldChart {
         this.countryPathElements = pathSelection;
 
 
+    };
+    /*
+     * Formats a number in an easier to read format, e.g. in millions/billions, etc.
+     *
+     * @param number The number to be formatted
+     *
+     * @return formatted number
+     */
+
+    formatNumber(number) {
+        let thousands = 1000;
+        let millions = 1000000;
+        let billions = 1000000000;
+        let trillions = 1000000000000;
+
+        if (number > trillions) {
+            return (number / trillions).toFixed(1) + "T";
+        }
+
+        if (number > billions) {
+            return (number / billions).toFixed(1) + "B";
+        }
+
+        if (number > millions) {
+            return (number / millions).toFixed(1) + "M";
+        }
+
+        if (number > thousands) {
+            return (number / thousands).toFixed(1) + "K";
+        }
+
+        return number.toFixed(1);
     };
 }
