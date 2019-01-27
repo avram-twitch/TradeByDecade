@@ -49,6 +49,7 @@ class YearBar {
                                            d3.event.stopPropagation();
         })
                   .on("click", function() { d3.event.stopPropagation();});
+        this.yearSlider = yearSlider;
     };
 
     addUpdateFunction(updatePlot)
@@ -63,6 +64,7 @@ class YearBar {
                                         .range([this.margin.left,this.width + this.margin.right]);
         sliderText.attr('x', yearScale(year));
         sliderText.attr('y', 20);
+        this.yearSlider.attr('value', year);
 
     };
 
